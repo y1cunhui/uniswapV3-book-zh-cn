@@ -1,52 +1,58 @@
-# Uniswap V3 Development Book (🚧 NOT FINISHED YET 🚧)
+# Uniswap V3 Development Book中文版 (🚧 NOT FINISHED YET 🚧)
+[English Version](https://github.com/Jeiwan/uniswapv3-book)
 
-This book will teach how to develop an advanced decentralized application! Specifically, we'll be building a clone of 
-[Uniswap V3](https://uniswap.org/), which is a decentralized exchange.
+本书将引导读者如何开发一个完整的高级的去中心化应用。在本书中，我们将搭建一个去中心化交易所，[Uniswap V3](https://uniswap.org/)的克隆
 
-## Why Uniswap?
-- It implements a very simple mathematical concept, `x * y = k`, which still makes it very powerful.
-- It's an advanced application that has a thick layer of engineering on top of the simple formula.
-- It's permissionless and battle-tested. Learning from an application that's been running in production for
-several years and handling billions of dollars will make you a better developer.
 
-## What we'll build
+
+## 为什么是Uniswap？
+- 它的底层数学原理非常简单，`x * y = k`，然而却十分有效
+- 它是一个在简单公式基础上搭建的较为复杂的去中心化应用
+- 它是去中心化且经过时间检验的。学习这个在生产环境中运行了数年并且处理了价值几十亿美元交易的应用将会大大提高你的开发水平。
+
+
+## 我们要做什么
 
 ![Front-end application screenshot](/screenshot.png)
 
-We'll build a full clone of Uniswap V3. It **won't be an exact copy** and it **won't be production-ready** because we'll
-do something in our own way and we'll **definitely** introduce multiple bugs. So, don't deploy this to the mainnet!
+我们将会搭建Uniswap V3的一个完整克隆。它 **不是完全的复制** 并且 **不能直接在生产环境中使用** ，因为在其中我们用自己的方式实现了很多功能因此 **一定** 包含一些bug。一定不要将其部署在主网！
 
-While our focus will primarily be on smart contracts, we'll also build a front-end application as a side hustle. 🙂
-I'm not a front-end developer and I cannot make a front-end application better than you, but I can show you how a
-decentralized exchange can be integrated into a front-end application.
+尽管我们将主要关注其智能合约部分，我们仍然会顺带搭建一个前端应用界面。我（即原作者）非前端开发者因此前端开发水平有限，但在这里可以向你展示一个DEX将如何集成到一个前端应用中。
 
-The full code of what we'll build is stored in a separate repository:
+
+
+完整代码可以参考以下仓库:
 
 https://github.com/Jeiwan/uniswapv3-code
 
-You can read this book at:
+你可以在这里阅读本书:
 
 https://uniswapv3book.com/
 
-## Table of Contents
 
-TODO
 
-## Running locally
+## 本地部署
 
-To run the book locally:
-1. Install [Hugo](https://gohugo.io/).
-1. Clone the repo:
+如何本地部署该书:
+1. 安装 [Hugo](https://gohugo.io/).
+2. Clone the repo:
   ```shell
-  $ git clone https://github.com/Jeiwan/uniswapv3-book
-  $ cd uniswapv3-book
+  $ git clone https://github.com/y1cunhui/uniswapV3-book-zh-cn
+  $ cd uniswapV3-book-zh-cn
   ```
-1. Run:
+3. 运行:
   ```shell
   $ hugo server -D
   ```
-1. Visit http://localhost:1313/ (or whatever URL the previous command outputs!)
+4. 访问 http://localhost:1313/ (或者在你命令行输出中展示的URL)
 
+## 译者注
+本书原作者的其他两个系列博客也是我非常推荐的，链接附在下面欢迎感兴趣者学习
 
-### TODO
-1. MOVE TO MILESTONE 2: Tick math implementation. Explanation of the math in [TickMath](https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/TickMath.sol) contract.
+1. https://jeiwan.net/posts/building-blockchain-in-go-part-1/
+如何从零开始搭建一个区块链，使用golang语言
+
+2. https://jeiwan.net/posts/programming-defi-uniswap-1/
+如果从零开始搭建uniswap，包含从V1到V2（V3即本书），也是我的DeFi入门教程
+推荐阅读本书前可以先阅读该系列。
+
