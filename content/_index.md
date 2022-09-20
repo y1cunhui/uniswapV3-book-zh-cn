@@ -9,11 +9,11 @@ weight: 0
 # bookSearchExclude: false
 ---
 
-# Uniswap V3 Development Book
+# Uniswap V3 Book 中文版
 
 ## 🚧 IN DEVELOPMENT 🚧
 
-**This book is not finished yet but it's going through final proofreading. All `TODO`s will be replaced with something
+**本书仍然在修订中，暂未完工. All `TODO`s will be replaced with something
 useful.**
 
 TODO: add cover

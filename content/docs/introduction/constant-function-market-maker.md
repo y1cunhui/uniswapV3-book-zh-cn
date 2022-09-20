@@ -1,5 +1,5 @@
 ---
-title: "Constant Function Market Makers"
+title: "恒定乘积做市商(CFMM)"
 weight: 2
 # bookFlatSection: false
 # bookToc: true
@@ -10,7 +10,7 @@ weight: 2
 ---
 {{< katex display >}} {{</ katex >}}
 
-# Constant Function Market Makers
+# 恒定乘积做市商 (Constant Function Market Makers)
 
 > This chapter retells [the whitepaper of Uniswap V2](https://uniswap.org/whitepaper.pdf). Understanding this math is
 crucial to build a Uniswap-like DEX, but it's totally fine if you don't understand everything at this stage.

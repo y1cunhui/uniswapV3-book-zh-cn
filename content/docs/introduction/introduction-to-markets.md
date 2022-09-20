@@ -1,5 +1,5 @@
 ---
-title: "Introduction to markets"
+title: "交易市场简介"
 weight: 1
 # bookFlatSection: false
 # bookToc: false
@@ -10,61 +10,48 @@ weight: 1
 ---
 
 
-# Introduction to markets
+# 交易市场简介
 
-## How centralized exchanges work
-In this book, we'll build a decentralized exchange (DEX) that will run on Ethereum. There're multiple approaches to how an
-exchange can be designed. All centralized exchanges have *an order book* at their core. An order book is just a journal that
-stores all sell and buy orders that traders want to make. Each order in this book contains a price the order must be
-executed at and the amount that must be bought or sold.
+## 中心化交易所(CEX)如何工作
+在本书中，我们将会搭建一个运行在以太坊(Ethereum)上的去中心化交易所(DEX)。DEX的设计模式非常复杂多样，因此我们先来考虑中心化交易所的设计。中心化交易所(CEX)的核心为*订单簿(order book)*，存储了用户的所有买单和卖单。订单簿中的每一笔订单都包含了订单成交的价格以及成交数量。
+
 
 ![Order book example](/images/milestone_0/orderbook.png)
 
-For trading to happen, there must exist *liquidity*, which is simply the availability of assets on a market. If you
-want to buy a wardrobe but no one is selling one, there's no liquidity. If you want to sell a wardrobe but no one wants
-to buy it, there's liquidity but no buyers. If there's no liquidity, there's nothing to buy or sell.
+交易能够正常进行的保障是*流动性(liquidity)*，也即整个市场中所有可获得的资产数目。假设你希望购买一个衣柜但是没有人售卖，即为没有流动性；如果你希望卖出一个衣柜但是没有人愿意购买，即为市场有流动性但是没有买方。没有流动性，就无法在市场中进行买卖。
 
-On centralized exchanges, the order book is where liquidity is accumulated. If someone places a sell order, they provide
-liquidity to the market. If someone places a buy order, they expected the market to have liquidity, otherwise, no trade
-is possible.
+在CEX中，流动性存放在订单簿中。如果某个用户提交了一个卖单，他就为市场提供了流动性；如果某人提交了一个买单，他们希望市场有流动性，否则交易就无法进行。
 
-When there's no liquidity, but markets are still interested in trades, *market makers* come into play. A market maker is
-a firm or an individual who provides liquidity to markets, that is someone who has a lot of money and who buys different
-assets to sell them on exchanges. For this job market makers are paid by exchanges. **Market makers make money on
-providing liquidity to exchanges**.
+如果市场没有流动性，但是仍然希望进行交易，就需要*做市商(market maker)*。做市商是向市场提供流动性的，拥有大量各种资产的公司或个人。**通过提供流动性，做市商能够从交易中获取利润**。
 
-## How decentralized exchanges work
 
-Don't be surprised, decentralized exchanges also need liquidity. And they also need someone who provides it to traders
-of a wide variety of assets. However, this process cannot be handled in a centralized way. **A decentralized solution
-must be found.** There are multiple decentralized solutions and some of them are implemented differently. Our focus will
-be on how Uniswap solves this problem.
+## 去中心化交易所(DEX)如何工作
 
-## Automated Market Makers
+毫无疑问，去中心化的交易也需要流动性，并且也需要做市商向市场提供多种资产的流动性。然而，在DEX中这个过程无法被中心化地处理，我们需要一种**去中心化的做市商**方案。相关解决方案非常多样化，而本书将主要关注Uniswap提供的方案。
 
-[The evolution of on-chain markets](https://bennyattar.substack.com/p/the-evolution-of-amms) brought us to the idea of
-Automated Market Makers (AMM). As the name implies, this algorithm works exactly like market makers but in an automated
-way. Moreover, it's decentralized and permissionless, that is:
-- it's not governed by a single entity;
-- all assets are not stored in one place;
-- anyone can use it from anywhere.
 
-### What is an AMM?
+## 自动做市商(AMM)
 
-An AMM is a set of smart contracts that define how liquidity is managed. Each trading pair (e.g. ETH/USDC) is a separate
-contract that stores both ETH and USDC and that's programmed to mediate trades: exchanging ETH for USDC and vice versa.
+[链上交易市场的历史](https://bennyattar.substack.com/p/the-evolution-of-amms) 一文提到了一种称作自动做市商(Automated Market Maker)的思路。正如其名，这种算法能够自动化完成像做市商一样的工作。更进一步，这种算法是去中心化且无需许可的，也即：
+- 没有被任何单个中心化机构控制
+- 所有资产并不存储在同一地方
+- 任何人在任何地点都能使用
 
-The core idea is **pooling**: each contract is a *pool* that stores liquidity let's different users (including other
-smart contract) to trade in a permissioned way. There are two roles, *liquidity providers* and trades, and these roles
-interact with each other through pools of liquidity, and the way they can interact with pools is programmed and immutable.
+
+### 什么是自动做市商AMM？
+
+一个AMM是一套定义如何管理流动性的智能合约。每个单独的交易对（例如ETH/USDC）都是一个单独的智能合约，存储了ETH和USDC的资产并且撮合交易，在这个合约中我们可以将ETH兑换成USDC或者将USDC兑换成ETH。
+
+在AMM中，一个核心思想为**池子(pooling)**：每个合约都是一个存储流动性的*池子*，允许不同的用户（包括其他合约）在其中进行某种方式的交易。在AMM中有两种角色，*流动性提供者(LP)*以及交易者；这两者通过流动性池进行交互，交互的方式由合约进行规定且不可更改。
+
 
 ![Automated Market Maker simplified](/images/milestone_0/amm_simplified.png)
 
-What makes this approach different from centralized exchanges is that **the smart contracts are fully automated and not
-managed by anyone**. There are no managers, admins, privileged users, etc. There are only liquidity providers and traders
-(they can be the same people), and all the algorithms are programmed, immutable, and public.
+这种方法与CEX的关键区别在于： **智能合约是完全自动化的并且不受任何人控制**。没有经理，没有系统管理员，没有特权用户，一切都没有。这里只有LP和交易者，任何人都可以担任这两种角色（也可以同时），并且所有的算法都是公开的、程序规定的、不可更改的。
 
-Let's now look closer at how Uniswap implements an AMM.
+在后面的篇章，我们将更进一步了解Uniswap是如何实现AMM的。
 
-> Please note that I use *pool* and *pair* terms interchangeably throughout the book because a Uniswap pool is a pair
-of two tokens.
+
+> 注意在后文中，*pool*和*pair*两个词可能会被交替使用，因为一个Uniswap的流动性池即一对token
+
+
