@@ -79,19 +79,31 @@ $$\Delta x = \frac{x \Delta y}{r(y - \Delta y)}$$
 
 > 下面是从交易函数推导出上述价格函数的过程:
 $$(x + r\Delta x)(y - \Delta y) = xy$$
+
 $$y - \Delta y = \frac{xy}{x + r\Delta x}$$
+
 $$-\Delta y = \frac{xy}{x + r\Delta x} - y$$
+
 $$-\Delta y = \frac{xy - y({x + r\Delta x})}{x + r\Delta x}$$
+
 $$-\Delta y = \frac{xy - xy - y r \Delta x}{x + r\Delta x}$$
+
 $$-\Delta y = \frac{- y r \Delta x}{x + r\Delta x}$$
+
 $$\Delta y = \frac{y r \Delta x}{x + r\Delta x}$$
 以及:
 $$(x + r\Delta x)(y - \Delta y) = xy$$
+
 $$x + r\Delta x = \frac{xy}{y - \Delta y}$$
+
 $$r\Delta x = \frac{xy}{y - \Delta y} - x$$
+
 $$r\Delta x = \frac{xy - x(y - \Delta y)}{y - \Delta y}$$
+
 $$r\Delta x = \frac{xy - xy + x \Delta y}{y - \Delta y}$$
+
 $$r\Delta x = \frac{x \Delta y}{y - \Delta y}$$
+
 $$\Delta x = \frac{x \Delta y}{r(y - \Delta y)}$$
 
 ## 曲线
