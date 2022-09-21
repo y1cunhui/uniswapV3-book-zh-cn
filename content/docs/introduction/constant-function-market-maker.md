@@ -51,9 +51,9 @@ $$(x + r\Delta x)(y - \Delta y) = k\$$
 
 由于Uniswap不同的池子是不同的智能合约，**同一个池子里的两种token互为计价标准进行定价**。例如：在一个ETH/USDC的池子里，ETH的价格用USDC作为标定，而USDC的价格用ETH作为标定。假设一个ETH的价格是1000USDC，那么一个USDC的价格就是0.001ETH。每一个池子都是如此，不管token是否为稳定币（例如，ETH/BTC池）
 
-在现实世界中，价格是根据[供求关系](https://www.investopedia.com/terms/l/law-of-supply-demand.asp)来决定的，对于AMM当然也是如此，现在，我们先不考虑需求方，只关注供应方。
+在现实世界中，价格是根据[供求关系](https://www.investopedia.com/terms/l/law-of-supply-demand.asp)来决定的，对于AMM当然也是如此，现在，我们先不考虑需求方，只关注供给方。
 
-池子中token的价格是由token的供应量决定的，也即**池子中拥有该token的资产数目**。token的价格也由此决定：
+池子中token的价格是由token的供给量决定的，也即**池子中拥有该token的资产数目**。token的价格也由此决定：
 
 
 
@@ -94,51 +94,45 @@ $$r\Delta x = \frac{xy - xy + x \Delta y}{y - \Delta y}$$
 $$r\Delta x = \frac{x \Delta y}{y - \Delta y}$$
 $$\Delta x = \frac{x \Delta y}{r(y - \Delta y)}$$
 
-## The Curve
+## 曲线
 
-The above calculations might seem too abstract and dry. Let's visualize the constant product function to better understand
-how it works.
+上面的数学计算可能有些抽象和枯燥，下面我们来把恒定乘积函数进行可视化来更好地理解其工作原理
 
-When plotted, the constant product function is a quadratic hyperbola:
+恒定成绩函数的图像为二次双曲线：
+
 
 ![The shape of the constant product formula curve](/images/milestone_0/the_curve.png)
 
-Where axes are the pool reserves. Every trade starts at the point on the curve that corresponds to the current ratio of
-reserves. To calculate the output amount, we need to find a new point on the curve, which has the $x$ coordinate of $x+\Delta x$, i.e.
-current reserve of token 0 + the amount we're selling. The change in $y$ is the amount of token 1 we'll get.
+横纵轴分别表示池子中两种代币的数量。每一笔交易的起始点都是曲线上与当前两种代币比例相对应的点。为了计算交易获得的token数量，我们需要找到曲线上的一个新的点，其x坐标值为 $x+\Delta x$，也即池子中现在token 0的数量加上我们卖出的数量。y轴上的变化量就是我们将会获得的token 1的数量。
 
-Let's look at a concrete example:
+
+下面我们来看一个更加具体的例子:
 
 ![Desmos chart example](/images/milestone_0/desmos.png)
 
-1. The purple line is the curve, the axes are the reserves of a pool (notice that they're equal at the start price).
-1. Start price is 1.
-1. We're selling 200 of token 0. If we use only the start price, we expect to get 200 of token 1.
-1. However, the execution price is 0.666, so we get only 133.333 of token 1!
+1. 紫色的线是公式代表的双曲线，横纵坐标轴代表池子中代币资产的数目（注意到在一开始，两种代币的数量相等）
+2. 起始价格为1
+3. 我们卖出200个token 0，如果我们仅以现货价格计算，我们希望获得200个token 1。
+4. 然而，交易实际发生的价格是0.666，所以我们仅仅获得了133.333个token 1！
 
-This example is from [the Desmos chart](https://www.desmos.com/calculator/7wbvkts2jf) made by [Dan Robinson](https://twitter.com/danrobinson),
-one of the creators of Uniswap. To build a better intuition of how it works, try making up different scenarios and
-plotting them on the graph. Try different reserves, see how output amount changes when $\Delta x$ is small relative to $x$.
 
-> As the legend goes, Uniswap was invented in Desmos.
 
-I bet you're wondering why using such a curve? It might seem like it punishes you for trading big amounts. This is true,
-and this is a desirable property! The law of supply and demand tells us that when demand is high (and supply is constant)
-the price is also high. And when demand is low, the price is also lower. This is how markets work. And, magically,
-the constant product function implements this mechanism! Demand is defined by the amount you want to buy, and supply is the
-pool reserves. When you want to buy a big amount relative to pool reserves the price is higher than when you want to
-buy a smaller amount. Such a simple formula guarantees such a powerful mechanism!
 
-Even though Uniswap doesn't calculate trade prices, we can still see them on the curve. Surprisingly, there are multiple
-prices when making a trade:
+这个例子来源于[the Desmos chart](https://www.desmos.com/calculator/7wbvkts2jf)，作者是[Dan Robinson](https://twitter.com/danrobinson),
+Uniswap的创作者之一。 为了能够更直观地理解它是如何工作的，尝试自己构建不同的场景并且在图上画出来。尝试不同的资产数目，观察当$\Delta x$ 远小于 $x$ 时获得代币的数量
+（译者注：强烈推荐去玩一玩上面这个demo网站）
 
-1. Before a trade, there's *a spot price*. It's equal to the relation of reserves, $y/x$ or $x/y$ depending on the
-direction of the trade. This price is also *the slope of the tangent line* at the starting point.
-1. After a trade, there's a new spot price, at a different point on the curve. And it's the slope of the tangent line at
-this new point.
-1. The actual price of the trade is the slope of the line connecting the two points!
+> 一个很传奇的故事是，Uniswap就是在Desmos中发明出来的.
 
-**And that's the whole math of Uniswap! Phew!**
+我猜你或许在想，为什么要用这样的一个曲线？这个曲线看起来好像是在惩罚大额交易者。事实上，的确就是如此，并且这也是一个非常合适的性质！供求关系告诉我们，当需求很高的时候（假设供给保持不变），价格也同样很高；当需求低的时候，价格也仍然很低。这正是市场的工作原理。并且很神奇地是，这样一个恒定乘积函数恰好实现了这个机制！需求就是你希望购买token的数量，而供给就是池子中的资产。当你希望购买的数量占池子的一个很大比例，价格就会比你购买小数量时更高。这样一个简单的公式，恰恰保证了这么一个强大的机制！
 
-Well, this is the math of Uniswap V2, and we're studying Uniswap V3. So in the next part, we'll see how the mathematics
-of Uniswap V3 is different.
+尽管Uniswap并不计算交易价格，我们仍然能够从曲线上看到它。惊奇的是，在一笔交易中我们有很多个价格：
+1. 在交易前，有一个*现货价格*。这个价格等于池子中两种资产的比例，$y/x$ 或者 $x/y$，取决于你交易的方向。这个价格也是起始点*切线的斜率*。
+2. 在交易后，有一个新的现货价格，在曲线上另一个不同的点。这个价格是新的点的切线斜率。
+3. 这个交易的实际发生价格，是连接新旧点的这条线的斜率！
+
+
+**这就是Uniswap里用到的全部数学！**
+
+好吧，事实上这只是Uniswap V2的数学原理，而我们将要学习的是Uniswap V3。所以在下一章，我们将会看到Uniswap V3的机制有什么不同。
+
