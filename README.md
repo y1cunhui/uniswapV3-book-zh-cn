@@ -64,7 +64,7 @@ https://uniswapv3book.com/
 2. [ ] milestone_0
    1. [x] introduction-to-markets
    2. [x] constant-function-market-maker
-   3. [ ] uniswap-v3
+   3. [x] uniswap-v3
    4. [ ] dev-environment
 3. [ ] milestone_1
 4. [ ] milestone_2

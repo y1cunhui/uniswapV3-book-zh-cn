@@ -95,58 +95,57 @@ $$\sqrt{xy} (\sqrt{P_1} - \sqrt{P_0}) = y_1 - y_0$$
 
 $$\sqrt{xy} (\sqrt{\frac{y_1}{x_1}} - \sqrt{\frac{y_0}{x_0}}) = y_1 - y_0$$
 
-$$\sqrt{y_1^2} - \sqrt{y_0^2} = y_1 - y_0$$
+$$\sqrt{y_1^2} - \sqrt{y_0^2} = y_1 - y_0$$ 
 
 $$y_1 - y_0 = y_1 - y_0$$
 
-## Pricing
+（译者注：第四步到第五步，$\sqrt{xy} = \sqrt{x_0y_0} = \sqrt{x_1y_1}$ ）
 
-Again, we don't need to calculate actual prices–we can calculate output amount right away. Also, since we're not going
-to track and store $x$ and $y$, our calculation will be based only on $L$ and $\sqrt{P}$.
+## 价格
 
-From the above formula, we can find $\Delta y$:
+同样，我们并不需要计算准确的价格——我们可以直接计算获得的token数量。并且，由于我们在合约中并不存储$x$和$y$，我们将仅通过 $L$ 和 $\sqrt{P}$ 进行计算。
+
+根据上文中的公式，我们能得到 $\Delta y$：
+
 
 $$\Delta y = \Delta \sqrt{P} L$$
 
-> See the third step in the proof above.
+> 见上述证明中的第三步。
 
-As we discussed above, prices in a pool are reciprocals of each other. Thus, $\Delta x$ is:
+正如上面所说，双方的价格互为倒数。因此，$\Delta x$ 的公式为：
+
 
 $$\Delta x = \Delta \frac{1}{\sqrt{P}} L$$
 
-$L$ and $\sqrt{P}$ allow us to not store and update pool reserves. Also, we don't need to calculate $\sqrt{P}$ each time
-because we can always find $\Delta \sqrt{P}$ and its reciprocal.
+$L$ 和 $\sqrt{P}$ 让我们不再需要存储和更新池子资产数量。并且，我们也并不需要每次都重新计算 $\sqrt{P}$ 因为我们从上述公式可以得到 $\Delta \sqrt{P}$。
+
 
 ## Ticks
 
-As we learned in this chapter, the infinite price range of V2 is split into shorter price ranges in V3. Each of these
-shorter price ranges is limited by boundaries–upper and lower points. To track the coordinates of these boundaries,
-Uniswap V3 uses *ticks*.
+正如我们前面说到的，V2中的无穷价格区间在V3中被分成了更小的价格区间，每个区间都由上下界断点进行限制。为了进行这些边界的协调，V3引入和 *ticks*。
+
 
 ![Price ranges and ticks](/images/milestone_0/ticks_and_ranges.png)
 
-In V3, the entire price range is demarcated by evenly distributed discrete ticks. Each tick has an index and corresponds
-to a certain price:
+在V3，整个价格区间由离散的、均匀分布的ticks进行标定。每个tick有一个index和对应的价格：
 
 $$p(i) = 1.0001^i$$
 
-Where $p(i)$ is the price at tick $i$. Taking powers of 1.0001 has a desirable property: the difference between two
-adjacent ticks is 0.01% or *1 basis point*.
+$p(i)$ 即为 tick $i$的价格. 使用1.0001的幂次作为标定有一个很好的性质：两个相邻tick之间的差距为0.01%或者*一个基点。*
 
-> Basis point (1/100th of 1%, or 0.01%, or 0.0001) is a unit of measure of percentages in finance. You could've heard about
-basis point when central banks announced changes in interest rates.
+> 基点 (1%的百分之一，或者0.01%，或者0.0001)是在金融中用来衡量百分比的一个单位。你可能在央行宣布对于利率的调整中听过基点这个名词。
 
-As we discussed above, Uniswap V3 stores $\sqrt{P}$, not $P$. Thus, the formula is in fact:
+正如我们之前讨论的，Uniswap V3存储的是$\sqrt{P}$而不是$P$。所以这个公式实际上是：
+
 
 $$\sqrt{p(i)} = \sqrt{1.0001}^i = 1.0001 ^{\frac{i}{2}}$$
 
-So, we get values like: $\sqrt{p(0)} = 1$, $\sqrt{p(1)} = \sqrt{1.0001} \approx 1.00005$, $\sqrt{p(-1)} \approx 0.99995$.
+我们得到的值大概是这样：$\sqrt{p(0)} = 1$, $\sqrt{p(1)} = \sqrt{1.0001} \approx 1.00005$, $\sqrt{p(-1)} \approx 0.99995$.
 
-Ticks are integers that can be positive and negative and, of course, they're not infinite. Uniswap V3 stores $\sqrt{P}$
-as a fixed point Q64.96 number, which is a rational number that uses 64 bits for the integer part and 96 bits for the
-fractional part. Thus, prices are within the range: $[2^{-128}, 2^{128}]$. And ticks are within the range:
+Ticks可以为正也可以为负，并且显然它不是无穷的。V3把$\sqrt{P}$ 存储为一个Q64.96类型的定点数，使用64位作为整数部分，使用96位作为小数部分。因此，价格的取值范围是$[2^{-128}, 2^{128}]$，ticks的取值范围是：
+
 
 $$[log_{1.0001}2^{-128}, log_{1.0001}{2^{128}}] = [-887272, 887272]$$
 
-> For deeper dive into the math of Uniswap V3, I cannot but recommend [this technical note](https://atiselsts.github.io/pdfs/uniswap-v3-liquidity-math.pdf)
-by [Atis Elsts](https://twitter.com/atiselsts).
+> 如果希望对于Uniswap V3的数学原理有更深的理解，作者推荐[这篇技术文章](https://atiselsts.github.io/pdfs/uniswap-v3-liquidity-math.pdf)，作者为[Atis Elsts](https://twitter.com/atiselsts)
+
