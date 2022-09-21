@@ -52,53 +52,51 @@ Uniswap V3引入了 *集中流动性(concentrated liquidity)* 的概念：LP可�
 假设起始价格在上面途中曲线的中间点。为了到达点$a$，我们需要购买池子里所有的$y$来使得池子里的$x$最大化；为了到达点$b$，我们需要买光池子里的$x$从而使$y$最大化。在这两个点，池子里都只剩一种token。
 
 
-> Fun fact: this allows to use Uniswap V3 price ranges as limit-orders!
+> 一个有趣的点：根据这个原理，可以利用V3的价格区间来挂限价单
 
-What happens when the current price range gets depleted during a trade? The price slips into the next price range. If the
-next price range doesn't exist, the trade ends up fulfilled partially-we'll see how this works later in the book.
+如果当前价格区间池子被耗尽将会发生什么？价格点会滑动到下一个价格区间。如果下一个价格区间不存在，这笔交易就会以部分成交而结束——我们将在本书后面的部分看到其如何实现。
 
-This is how liquidity is spread in [the USDC/ETH pool in production](https://info.uniswap.org/#/pools/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8):
+
+下面一图展示了[USDC/ETH池子的流动性分布](https://info.uniswap.org/#/pools/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8):
 
 ![Liquidity in the real USDC/ETH pool](/images/milestone_0/usdceth_liquidity.png)
 
-You can see that there's a lot of liquidity around the current price but the further away from it the less liquidity
-there is–this is because liquidity providers strive to have higher efficiency of their capital. Also, the whole range is
-not infinite, it's upper boundary is shown on the image.
+可以看到，大量流动性集中在现在价格的附近，而较远的价格区间中的流动性较少——这是因为LP更希望提高它们的资产利用效率。当然，整个区间也不是无穷的，在图片右侧也显示了其上界。
 
-## The Mathematics of Uniswap V3
 
-Mathematically, Uniswap V3 is based on V2: it uses the same formulas, but they're... let's call it *augmented*.
+## Uniswap V3的数学原理
 
-To handle transitioning between price ranges, simplify liquidity management, and avoid rounding errors, Uniswap V3 uses
-these new concepts:
+在数学原理上，V3是基于V2的：它们使用了相同的底层公式，但实际上V3使用的是可以被称作*增强版*。
+
+为了处理价格区间之间的转换，简化流动性管理，以及避免取整出现问题，V3使用了下面这些新的标识：
 
 $$L = \sqrt{xy}$$
 
 $$\sqrt{P} = \sqrt{\frac{y}{x}}$$
 
-$L$ is *the amount of liquidity*. Liquidity in a pool is the combination of token reserves (that is,
-two numbers). We know that their product is $k$, and we can use this to derive the measure of liquidity, which is
-$\sqrt{xy}$–a number that, when multiplied by itself, equals to $k$. $L$ is the geometric mean of $x$ and $y$.
+$L$ 被称作 *流动性数量*。池子中的流动性是两种token资产数量的组合。我们知道按照公式，两种代币数量乘积为$k$，因此我们可以用 $\sqrt{xy}$ 来衡量池子流动性。$L$ 实际上是 $x$ 和 $y$ 的几何平均数。
 
-$y/x$ is the price of token 0 in terms of 1. Since token prices in a pool are reciprocals of each other, we can use only
-one of them in calculations (and by convention Uniswap V3 uses $y/x$). The price of token 1 in terms of token 0 is simply 
-$\frac{1}{y/x}=\frac{x}{y}$. Similarly, $\frac{1}{\sqrt{P}} = \frac{1}{\sqrt{y/x}} = \sqrt{\frac{x}{y}}$.
+$y/x$ 是token 0相对于token 1的价格. 由于池子里两种代币的价格互为倒数，我们在计算中仅使用其中一个(Uniswap V3使用的是$y/x$)。Token 1相对于token 0的价格即为$\frac{1}{y/x}=\frac{x}{y}$。类似地， $\frac{1}{\sqrt{P}} = \frac{1}{\sqrt{y/x}} = \sqrt{\frac{x}{y}}$.
 
-Why using $\sqrt{p}$ instead of $p$? There are two reasons:
+我们使用 $\sqrt{P}$ 而不是 $P$ 有以下两个原因：
 
-1. Square root calculation is not precise and causes rounding errors. Thus, it's easier to store the square root without
-calculating it in the contracts (we will not store $x$ and $y$ in the contracts).
-1. $\sqrt{P}$ has an interesting connection to $L$: $L$ is also the relation between the change in output amount and 
-the change in $\sqrt{P}$.
+1. 平方根计算并不精确并且会引入取整的问题。因此，更简单的方法是我们干脆就在合约中存平方根的结果，而不是在合约中计算它。（合约中并不存储$x$和$y$）
+2. $\sqrt{P}$ 与 $L$ 之间有一个有趣的关系：$L$ 也表示了output amount的变化与$\sqrt{P}$的变化之间的关系：
+
 
     $$L = \frac{\Delta y}{\Delta\sqrt{P}}$$
 
-> Proof:
+> 证明:
 $$L = \frac{\Delta y}{\Delta\sqrt{P}}$$
+
 $$\sqrt{xy} = \frac{y_1 - y_0}{\sqrt{P_1} - \sqrt{P_0}}$$
+
 $$\sqrt{xy} (\sqrt{P_1} - \sqrt{P_0}) = y_1 - y_0$$
+
 $$\sqrt{xy} (\sqrt{\frac{y_1}{x_1}} - \sqrt{\frac{y_0}{x_0}}) = y_1 - y_0$$
+
 $$\sqrt{y_1^2} - \sqrt{y_0^2} = y_1 - y_0$$
+
 $$y_1 - y_0 = y_1 - y_0$$
 
 ## Pricing
