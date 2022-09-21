@@ -47,6 +47,8 @@ https://uniswapv3book.com/
 4. 访问 http://localhost:1313/ (或者在你命令行输出中展示的URL)
 
 ## 译者注
+如果对文章翻译有意见和改进，欢迎提issue和PR（翻译结束前，暂不接受PR）
+
 本书原作者的其他两个系列博客也是我非常推荐的，链接附在下面欢迎感兴趣者学习
 
 1. https://jeiwan.net/posts/building-blockchain-in-go-part-1/
@@ -56,3 +58,18 @@ https://uniswapv3book.com/
 如果从零开始搭建uniswap，包含从V1到V2（V3即本书），也是我的DeFi入门教程
 推荐阅读本书前可以先阅读该系列。
 
+## TODO
+
+1. [ ] Introduction
+2. [ ] milestone_0
+   1. [x] introduction-to-markets
+   2. [x] constant-function-market-maker
+   3. [ ] uniswap-v3
+   4. [ ] dev-environment
+3. [ ] milestone_1
+4. [ ] milestone_2
+5. [ ] milestone_3
+6. [ ] milestone_4
+7. [ ] milestone_5
+8. [ ] milestone_6
+9. [ ] proofreading
