@@ -10,68 +10,47 @@ weight: 3
 ---
 {{< katex display >}} {{</ katex >}}
 
-# Introduction to Uniswap V3
+# Uniswap V3简介
 
-> This chapter retells [the whitepaper of Uniswap V3](https://uniswap.org/whitepaper-v3.pdf). Again, it's totally ok if
-you don't understand all the concepts. They will be clearer when converted to code.
+> 本章节主要讲述了[Uniswap V3白皮书](https://uniswap.org/whitepaper-v3.pdf)中的内容。同样，假设你没有理解本章的所有概念也没有关系，我们在后面章节直接看代码可能会更清晰。
 
-To better understand the innovations Uniswap V3 brings, let's first look at the imperfections of Uniswap V2.
+为了更好地理解Uniswap V3的创新之处在哪里，我们首先来看Uniswap V2的缺点有哪些。
 
-Uniswap V2 is a general exchange that implements one AMM algorithm. However, not all trading pairs are equal.
-Pairs can be grouped by price volatility:
+Uniswap V2使用AMM机制实现了一个通用的交易市场。然而，并不是所有的交易对都是平等的，交易对可以根据价格的波动性分为以下两类
 
-1. Tokens with medium and high price volatility. This group includes most tokens since most tokens don't have their
-prices pegged to something and are subject to market fluctuations.
-1. Tokens with low volatility. This group includes pegged tokens, mainly stablecoins: USDC/USDT, USDC/DAI, USDT/DAI, etc.
-Also: ETH/stETH, ETH/rETH (variants of wrapped ETH).
+1. 价格波动性为中等或高的代币对。这一类包含绝大多数的代币，因为绝大多数代币并没有锚定(pegged to)到某些东西，因此其价格随着市场波动而波动。
+2. 价格波动性低的代币对。这一类包含了有锚定的代币，主要为稳定币：USDT/USDC，USDC/DAI，USDT/DAI等等。也包括ETH/stETH，ETH/rETH（一些wrapped ETH）等类型。
 
-These groups require different, let's call them, pool configurations. The main difference is that pegged tokens require
-high liquidity to reduce the demand effect (we learned about it in the previous chapter) on big trades. The prices of
-USDC and USDT must stay close to 1, no matter how big the number of tokens we want to buy and sell. Since Uniswap V2's
-general AMM algorithm is not very well suited for stablecoin trading, alternative AMMs (mainly [Curve](https://curve.fi))
-were more popular for stablecoin trading.
+这些类对于我们称作“流动性池配置”的概念有不同的要求。最主要的区别在于，锚定代币对需要非常高的流动性来降低大额交易对其的影响。USDC与USDT的价格必须保持在1附近，无论我要买卖多大数目的代币。由于Uniswap V2的通用AMM算法对于稳定币交易并没有很好的适配，其他的AMM（主要是[Curve](https://curve.fi)）则在稳定币交易中更加流行。
 
-What caused this problem is that liquidity in Uniswap V2 pools is distributed infinitely–pool liquidity allows trades at
-any price, from 0 to infinity:
+导致这个问题出现的原因在于，Uniswap V2池子的流动性是分布在无穷区域上的-即池子允许在任何价格的交易发生，从0到正无穷：
+
 
 ![The curve is infinite](/images/milestone_0/curve_infinite.png)
 
-This might not seem like a bad thing, but this makes capital inefficient. Historical prices of an asset stay within
-some defined range, whether it's narrow or wide. For example, the historical price range of ETH is from <span>$0.75</span>
-to <span>$4,800</span> (according to [CoinMarketCap](https://coinmarketcap.com/currencies/ethereum/)). Today (June 2022,
- 1 ETH costs <span>$1,1800</span>), no one would buy 1 ether at <span>$5000</span>, so it makes no sense to provide
-liquidity at this price. Thus, it doesn't really make sense providing liquidity in a price range that's far away from the
-current price or that will never be reached.
+这听起来不是一个坏事，但事实上它导致了资本利用效率的不足。一个资产的历史价格通常是在某个区间内的，不管这个区间是大还是小。比如，ETH的历史价格大致在<span>$0.75</span>
+到 <span>$4,800</span> 这个区间（数据来源[CoinMarketCap](https://coinmarketcap.com/currencies/ethereum/)）。在今天（2022年6月，1个ETH的现货价格是<span>$1800</span>，没有人会愿意用<span>$5000</span>购买一个ETH，所以在这个点提供流动性是毫无用处的。因此，在远离当前价格区间的、永远不会达到的某个点上提供流动性是毫无意义的
 
-> However, we all believe in ETH reaching $10,000 one day.
+> 当然，我们都相信ETH的价格某天会达到$10000
+> （译者注：仅代表原作者观点）
 
-## Concentrated Liquidity
+## 集中流动性
 
-Uniswap V3 introduces *concentrated liquidity*: liquidity providers can now choose the price range they want to provide
-liquidity into. This improves capital efficiency by allowing to put more liquidity into a narrow price range, which makes
-Uniswap more diverse: it can now have pools configured for pairs with different volatility. This is how V3 improves V2.
+Uniswap V3引入了 *集中流动性(concentrated liquidity)* 的概念：LP可以选择他们希望在哪个价格区间提供流动性。这个机制通过将更多的流动性提供在一个相对狭窄的价格区间，从而大大提高了资本利用效率；这也使Uniswap的使用场景更加多样化：它现在可以对于不同价格波动性的池子进行不同的配置。这就是V3相对于V2的提升点。
 
-In a nutshell, a Uniswap V3 pair is many small Uniswap V2 pairs. The main difference between V2 and V3 is that, in V3,
-there are **many price ranges** in one pair. And each of these shorter price ranges has **finite reserves**. The entire
-price range from 0 to infinite is split into shorter price ranges, with each of them having its own amount of
-liquidity. But, what's crucial is that within that shorter price ranges, **it works exactly as Uniswap V2**. This is why
-I say that a V3 pair os many small V2 pairs.
+简单地来说，一个Uniswap V3的交易对是许多个Uniswap V2的交易对。V2与V3的区别是，在V3中，一个交易对有许多的**价格区间**，而每个价格区间内都有**有限数量的资产**。从零到正无穷的整个价格区间被划分成了许多个小的价格区间，每一个区间中都有一定数量的流动性。而更关键的点在于，在每个小的价格区间中，**工作机制与Uniswap V2**一样。这也是为什么说一个Uniswap V3的池子就是许多个V2的池子。
 
-Now, let's try to visualize it. What we're saying is that we don't want the curve to be finite. We cut it at the points
-$a$ and $b$ and say that these are the boundaries of the curve. Moreover, we shift the curve so the boundaries lay on
-the axes. This is what we get:
+下面，我们来对这种机制进行可视化。我们并不是重新选择一个有限的曲线，而是我们把它在价格$a$ 与价格$b$ 之间的部分截取出来，认为它们是曲线的边界。更进一步，我们把曲线进行平移使得边界点落在坐标轴上，于是得到了下图：
+
 
 ![Uniswap V3 price range](/images/milestone_0/curve_finite.png)
 
-> It looks lonely, doesn't it? This is why there are many price ranges in Uniswap V3–so they don't feel lonely 🙂
+> 它看起来或许有点孤单， 因此Uniswap V3有许多的价格区间——这样它们就不会感到孤单了 🙂
 
-As we saw in the previous chapter, buying or selling tokens moves the price along the curve. A price range limits the
-movement of the price. When the price moves to either of the points, the pool becomes **depleted**: one of the token
-reserves will be 0 and buying this token won't be possible.
+正如我们在前一章中讲到的那样，交易token使得价格在曲线上移动，而价格区间限制了价格点的移动。当价格移动到曲线的一端时，我们说这个池子被**耗尽了**：其中一种代币的资产变成了0，无法再购买这种代币（当然，仅仅指在这个价格区间内）
 
-On the chart above, let's assume that the start price is at the middle of the curve. To get to the point $a$, we need to
-buy all available $y$ and maximize $x$ in the range; to get to the point $b$, we need to buy all available $x$ and
-maximize $y$ in the range. At these points, there's only one token in the range!
+假设起始价格在上面途中曲线的中间点。为了到达点$a$，我们需要购买池子里所有的$y$来使得池子里的$x$最大化；为了到达点$b$，我们需要买光池子里的$x$从而使$y$最大化。在这两个点，池子里都只剩一种token。
+
 
 > Fun fact: this allows to use Uniswap V3 price ranges as limit-orders!
 
