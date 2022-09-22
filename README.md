@@ -68,7 +68,7 @@ https://uniswapv3book.com/
    4. [x] dev-environment
 3. [ ] milestone_1
    1. [x] introduction
-   2. [ ] calculating-liquidity
+   2. [x] calculating-liquidity
    3. [ ] prividing-liquidity
    4. [ ] first-swap
    5. [ ] manager-contract

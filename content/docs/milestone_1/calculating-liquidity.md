@@ -89,109 +89,92 @@ $$\sqrt{P_u} = 5875717789736564987741329162240$$
 > price_to_sqrtp(5000)
 > > 5602277097478614198912276234240
 > ```
-> Notice that we're multiplying before converting to integer. Otherwise, we'll lose precision.
+> 注意先进行乘法再取整，否则会损失精度
+
+## Token数量计算
+
+接下来，我们需要决定向池子中投入多少token。答案是：越多越好。数量并没有严格定义，我们质押的数目越多，购买同样数量的ETH就会使得价格的变动越小，防止离开我们的价格区间。在开发和测试智能合约的过程中，我们可以获得任意数量的token，所以钱不是问题。
+
+为了实现我们的第一笔交易，我们将会在池子中质押1ETH和5000USDC。
 
 
-## Token Amounts Calculation
+> 要记得池子中资产数量的比例决定了现货价格。所以假设我们希望像池子中投入更多的资产而保持现货价格不变，我们投入的资产也必须满足同样的比例，例如：2ETH和10,000USDC；10ETH和50,000USDC。
 
-Next step is to decide how many tokens we want to deposit into the pool. The answer is: as many as we want. The amounts
-are not strictly defined, we can deposit as much as it is enough to buy a small amount of ETH without making the current
-price leave the price range we put liquidity into. During development and testing we'll be able to mint any amount of tokens,
-so getting the amounts we want is not a problem.
+## 流动性数量计算
 
-For our first swap, let's deposit 1 ETH and 5000 USDC.
+接下来，我们将基于我们质押token的数量计算流动性$L$的值。这部分可能略有难度，记得跟紧！
 
-> Recall that the proportion of current pool reserves tells the current spot price. So if we want to put more tokens into
-the pool and keep the same price, the amounts must be proportional, e.g.: 2 ETH and 10,000 USDC; 10 ETH and 500,000 USDC, etc.
 
-## Liquidity Amount Calculation
+根据之前我们提到过的公式，流动性数量如下计算：
 
-Next, we need to calculate $L$ based on the amounts we'll deposit. This is a tricky part, so hold tight!
-
-From the theoretical introduction, you remember that:
 $$L = \sqrt{xy}$$
 
-However, this formula is for the infinite curve 🙂 But we want to put liquidity into a limited price range, which is just
-a segment of that infinite curve. We need to calculate $L$ specifically for the price range we're going to deposit liquidity
-into. We need some more advanced calculations.
+然而，上述公式是用于无穷价格区间曲线的 🙂。但我们希望的是把流动性放在某个有界的价格区间，仅仅是无穷曲线的一部分。我们需要针对我们希望流动性存在的价格区间来计算对应的$L$，因此可能需要一些更复杂的计算。
 
-To calculate $L$ for a price range, let's look at one interesting fact we have discussed earlier: price ranges can be
-depleted. It's absolutely possible to buy the entire amount of one token from a price range and leave the pool with only
-the other token.
+为了计算这个价格区间的$L$，我们来回顾我们之前讨论过的一个有趣的点：价格区间可以被**耗尽**。我们可以将一个价格区间的某种token全部买走，使得该区间中只有另一种token：
 
 ![Range depletion example](/images/milestone_1/range_depleted.png)
 
-At the points $a$ and $b$, there's only one token in the range: ETH at the point $a$ and USDC at the point $b$.
+在上图中的两个边界点，区间流动性池中都只有一种token：在$a$点池子里只有ETH，在$b$点只有USDC。
 
-That being said, we want to find an $L$ that will allow the price to move to either of the points. We want enough
-liquidity for the price to reach either of the boundaries of a price range. Thus, we want $L$ to be calculated based on
-the maximum amounts of $\Delta x$ and $\Delta y$.
+也就是说，我们希望能够找到一个$L$，使得价格能够移动到两个端点处。我们需要足够的流动性来使得价格能够达到上下界，因此，我们会希望通过$\Delta x$和$\Delta y$的最大值来计算流动性。
 
-Now, let's see what the prices are at the edges. When ETH is bought from a pool, the price is growing; when USDC is bought,
-the price is falling. Recall that the price is $\frac{y}{x}$. So, at the point $a$, the price is lowest of the range;
-at the point $b$, the price is highest.
+现在我们来看一下边界点的价格。当从池子中购买ETH，价格会升高；当从池子中购买USDC（卖出ETH），价格会下跌。由于价格为$\frac{y}{x}$，所以$a$点为价格最低点，$b$点为价格最高点。
 
->In fact, prices are not defined at these points because there's only one reserve in the pool, but what we need to
-understand here is that the price around the point $b$ is higher than the start price, and the price at the point $a$ is
-lower than the start price.
+> 事实上，按照公式，在这两个点的价格是没有定义的，因为池子中只有一种token，但是我们在这里只需要理解，$b$点的价格高于起始价格，$a$点价格低于起始价格即可。
 
-Now, break the curve from the image above into two segments: one to the left of the start point and one to the right of
-the start point. We're going to calculate **two** $L$'s, one for each of the segments. Why? Because each of the two
-tokens of a pool contributes to **either of the segments**. And since we want to distribute liquidity evenly along the
-entire curve, we want to pick the minimal of the two $L$'s.
+现在，我们将图中的曲线分为两部分：起始点左边和起始点右边。我们将在两边**分别**计算出$L$。为什么会有两个？因为池子中的两种资产分别对**其中一边**起作用。由于我们希望流动性均匀分布在这个区间，我们最后会选取两个$L$中较小的一个。
 
+（译者注：保证需要提供的token数量不超过原始预计的token数量）
 
 ![Liquidity on the curve](/images/milestone_1/curve_liquidity.png)
 
-And the final detail I need to focus your attention on here is: **new liquidity must not change the current price**. That
-is, it must be proportional to the current proportion of the reserves. And this is why the two $L$'s can be different–when
-the proportion is not preserved. And we pick the small $L$ to reestablish the proportion.
+最后还需要说明的一个关键点是：**新的流动性需要保证不改变现货价格**。也即，它必须与现在两种资产的数量成比例。这也是为什么我们上面会计算出两个$L$-因为仅考虑一种资产，没有保证比例。我们选择较小的那个$L$来重新计算比例。
 
-I hope this will make more sense after we implement this in code! Now, let's look at the formulas.
+或许在后面小节实现代码的过程中我们会对此有更多感觉吧。现在我们来看公式
 
-Let's recall how $\Delta x$ and $\Delta y$ are calculated:
+回忆一下， $\Delta x$ 和 $\Delta y$ 的计算公式为：
 
 $$\Delta x = \Delta \frac{1}{\sqrt{P}} L$$
 $$\Delta y = \Delta \sqrt{P} L$$
 
-We can expands these formulas by replacing the delta P's with actual prices (we know them from the above):
+我们把上述公式中的:$\Delta \sqrt{P}$ 相关部分展开：
 
 $$\Delta x = (\frac{1}{\sqrt{P_b}} - \frac{1}{\sqrt{P_c}}) L$$
 $$\Delta y = (\sqrt{P_c} - \sqrt{P_a}) L$$
 
-$P_a$ is the price at the point $a$, $P_b$ is the price at the point $b$, and $P_c$ is the current price.
+$P_a$ 是 $a$点的价格，$P_b$ 是 $b$点的价格, $P_c$ 是现货价格。
 
-Let's find the $L$ from the first formula:
+我们接下来根据第一个公式推导出计算$L$的公式：
 
 $$\Delta x = (\frac{1}{\sqrt{P_b}} - \frac{1}{\sqrt{P_c}}) L$$
 $$\Delta x = \frac{L}{\sqrt{P_b}} - \frac{L}{\sqrt{P_c}}$$
 $$\Delta x = \frac{L(\sqrt{P_b} - \sqrt{P_c})}{\sqrt{P_b} \sqrt{P_c}}$$
 $$L = \Delta x \frac{\sqrt{P_b} \sqrt{P_c}}{\sqrt{P_b} - \sqrt{P_c}}$$
 
-And from the second formula:
+从第二个公式推导:
 $$\Delta y = (\sqrt{P_c} - \sqrt{P_a}) L$$
 $$L = \frac{\Delta y}{\sqrt{P_c} - \sqrt{P_a}}$$
 
-So, these are our two $L$'s, one for each of the segments:
+这就是我们的两个$L$的计算公式，跟别对应起始点两边的两段曲线:
 
 $$L = \Delta x \frac{\sqrt{P_b} \sqrt{P_c}}{\sqrt{P_b} - \sqrt{P_c}}$$
 $$L = \frac{\Delta y}{\sqrt{P_c} - \sqrt{P_a}}$$
 
-
-Now, let's plug the prices we calculated earlier into them:
+接下来，我们把之前计算出的价格代入公式:
 
 $$L = \Delta x \frac{\sqrt{P_b}\sqrt{P_c}}{\sqrt{P_b}-\sqrt{P_c}} = 1 ETH * \frac{67.42 * 70.71}{70.71 - 67.42}$$
-After converting to Q64.96, we get:
+转换成Q64.96后得到:
 
 $$L = 1519437308014769733632$$
 
-And for the other $L$:
+对于另一个$L$:
 $$L = \frac{\Delta y}{\sqrt{P_c}-\sqrt{P_a}} = \frac{5000USDC}{74.16-70.71}$$
 $$L = 1517882343751509868544$$
 
-Of these two, we'll pick the smaller one.
+两者中，我们选择小的那一个
 
-> In Python:
+> Python计算:
 > ```python
 > sqrtp_low = price_to_sqrtp(4545)
 > sqrtp_cur = price_to_sqrtp(5000)
@@ -213,19 +196,18 @@ Of these two, we'll pick the smaller one.
 > > 1517882343751509868544
 > ```
 
-## Token Amounts Calculation, Again
 
-Since we choose the amounts we're going to deposit, the amounts can be wrong. We cannot deposit any amounts at any price
-ranges; liquidity amount needs to be distributed evenly along the curve of the price range we're depositing into. Thus, even
-though users choose amounts, the contract needs to re-calculate them, and actual amounts will be slightly different (at
-least because of rounding).
 
-Luckily, we already know the formulas:
+## 重新计算token数量
+
+尽管我们初始选择了我们想要质押的token数目，这个数目可能并不准确。我们并不能在任何价格区间质押任何比例的token来获取流动性，因为流动性需要满足在价格区间的曲线上均匀分布。因此，尽管用户选择了其实数量，合约会对它们重新计算，所以实际的数量会略有不同（至少，由于取整的精度变化）
+
+幸运的是，我们已经获得了对应的公式
 
 $$\Delta x = \frac{L(\sqrt{P_b} - \sqrt{P_c})}{\sqrt{P_b} \sqrt{P_c}}$$
 $$\Delta y = L(\sqrt{P_c} - \sqrt{P_a})$$
 
-> In Python:
+> 在Python中:
 > ```python
 > def calc_amount0(liq, pa, pb):
 >     if pa > pb:
@@ -243,7 +225,7 @@ $$\Delta y = L(\sqrt{P_c} - \sqrt{P_a})$$
 > (amount0, amount1)
 > > (998976618347425408, 5000000000000000000000)
 > ```
-> As you can see, the number are close to the amounts we want to provide, but ETH is slightly smaller.
+> 正如上述计算结果，得到的数据基本等于我们想要提供的数量，不过ETH略少一点
 
-> **Hint**: use `cast --from-wei AMOUNT` to convert from wei to ether, e.g.:  
-> `cast --from-wei 998976618347425280` will give you `0.998976618347425280`.
+> **Hint**: 使用 `cast --from-wei AMOUNT` 来把wei转换成ether, 示例:  
+> `cast --from-wei 998976618347425280` 输出 `0.998976618347425280`.
