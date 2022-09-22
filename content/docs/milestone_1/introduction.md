@@ -30,12 +30,3 @@ weight: 1
 本章中所有用到的python计算都在[unimath.py](https://github.com/Jeiwan/uniswapv3-code/blob/main/unimath.py)。
 
 > 本章的完整代码可以参考[这个github分支](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_1)
-
-Before getting to code, let's figure out the math and calculate all the parameters of the model. To keep things simple,
-I'll do math calculations in Python before implementing them in Solidity. This will allow us to focus on the math
-without diving into the nuances of math in Solidity. This also means that, in smart contracts, we'll hardcode all the
-amounts. This will allows us to start with a simple minimal viable product.
-
-For your convenience, I put all the Python calculations in [unimath.py](https://github.com/Jeiwan/uniswapv3-code/blob/main/unimath.py).
-
-> You'll find the complete code of this milestone in [this Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_1).

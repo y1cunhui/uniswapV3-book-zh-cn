@@ -67,9 +67,16 @@ https://uniswapv3book.com/
    3. [x] uniswap-v3
    4. [x] dev-environment
 3. [ ] milestone_1
+   1. [x] introduction
+   2. [ ] calculating-liquidity
+   3. [ ] prividing-liquidity
+   4. [ ] first-swap
+   5. [ ] manager-contract
+   6. [ ] deployment
+   7. [ ] user-interface 
 4. [ ] milestone_2
 5. [ ] milestone_3
 6. [ ] milestone_4
 7. [ ] milestone_5
 8. [ ] milestone_6
-9. [ ] proofreading
+9.  [ ] proofreading
