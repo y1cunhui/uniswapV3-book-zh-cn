@@ -1,5 +1,5 @@
 ---
-title: "Calculating Liquidity"
+title: "计算流动性"
 weight: 2
 # bookFlatSection: false
 # bookToc: true
@@ -11,36 +11,30 @@ weight: 2
 
 {{< katex display >}} {{</ katex >}}
 
-# Calculating liquidity
+# 计算流动性
 
-Trading is not possible without liquidity, and to make our first swap we need to put some liquidity into the pool contract.
-Here's what we need to know to add liquidity to the pool contract:
+没有流动性就无法进行交易，因此为了能够完成我们的第一笔交易，我们首先需要向池子中添加一些流动性。为了向池子合约添加流动性，我们需要知道：
 
-1. A price range. As a liquidity provider, we want to provide liquidity at a specific price range, and it'll only be used
-in this range.
-1. Amount of liquidity, which is the amounts of two tokens. We'll need to transfer these amounts to the pool contract.
+1. 一个价格区间，即LP希望他的流动性仅在这个区间上提供和被利用
+2. 提供流动性的数量，也即提供的两种代币的数量，我们需要将它们转入池子合约。
 
-Here, we're going to calculate these manually, but, in a later chapter, a contract will do this for us. Let's begin with
-a price range.
+在本节中，我们会手动计算上述变量的值；在后续章节中，我们会在合约中对此进行实现。首先我们来考虑价格区间
 
-## Price Range Calculation
+## 价格区间计算
+回忆一下上一章所讲，在Uniswap V3中，整个价格区间被划分成了ticks：每个tick对应一个价格，以及有一个编号。在我们的第一个实现中，我们的现货价格设置为1ETH对5000USDC。购买ETH会移除池子中的一部分ETH，从而使得价格变得高于5000USDC。我们希望在一个包含此价格的区间中提供流动性，并且要确保最终的价格**落在这个区间内**。（跨区间的交易将会在后续章节提到）。
 
-Recall that, in Uniswap V3, the entire price range is demaracted into ticks: each tick corresponds to a price and has
-an index. In our first pool implementation, we're going to buy ETH for USDC at the price of <span>$5000</span> per 1 ETH.
-Buying ETH will remove some amount of it from the pool and will push the price slightly above <span>$5000</span>.
-We want to provide liquidity at a range that includes this price. And we want to be sure that the final price will stay
-**within this range** (we'll do multi-range swaps in a later milestone).
+我们需要找到3个tick：
+1. 对应现货价格的tick（1ETH-5000USDC）
+2. 提供流动性的价格区间上下界对应的tick。在这里，下界为4545u，上界为5500u。
 
-We'll need to find three ticks:
-1. The current tick will correspond to the current price (5000 USDC for 1 ETH).
-1. The lower and upper bounds of the price range we're providing liquidity into. Let the lower price be <span>$4545</span>
-and the upper price be <span>$5500</span>.
+（译者注：4545u，$4545，4545USDC均代表相同含义，在本书中可能会混合使用）
 
-From the theoretical introduction we know that:
+从之前的章节中我们知道下述公式：
 
 $$\sqrt{P} = \sqrt{\frac{y}{x}}$$
 
-Since we've agreed to use ETH as the $x$ reserve and USDC as the $y$ reserve, the prices at each of the ticks are:
+由于我们把ETH作为资产$x$，USDC作为资产$y$，每个tick对应的值为：
+
 
 $$\sqrt{P_c} = \sqrt{\frac{5000}{1}} = \sqrt{5000} \approx 70.71$$
 
@@ -48,24 +42,24 @@ $$\sqrt{P_l} = \sqrt{\frac{4545}{1}} \approx 67.42$$
 
 $$\sqrt{P_u} = \sqrt{\frac{5500}{1}} \approx 74.16$$
 
-Where $P_c$ is the current price, $P_l$ is the lower bound of the range, $P_u$ is the upper bound of the range.
+在这里，$P_c$代表现货价格，$P_l$代表区间下界，$P_u$代表区间上界。
 
-Now, we can find corresponding ticks. We know that prices and ticks are connected via this formula:
+接下来，我们可以计算价格对应的ticks。使用下面公式：
 
 $$\sqrt{P(i)}=1.0001^{\frac{i}{2}}$$
 
-Thus, we can find tick $i$ via:
+我们可以得到关于$i$的公式：
 
 $$i = log_{\sqrt{1.0001}} \sqrt{P(i)}$$
 
-> The square roots in this formula cancel out, but since we're working with $\sqrt{p}$ we need to preserve them.
+> 公式中的两个根号实际上是可以消去的，但由于我们会使用$\sqrt{p}$进行计算，我们选择保留根号
 
-Let's find the ticks:
-1. Current tick: $i_c = log_{\sqrt{1.0001}} 70.71 = 85176$
-1. Lower tick: $i_l = log_{\sqrt{1.0001}} 67.42 = 84222$
-1. Upper tick: $i_u = log_{\sqrt{1.0001}} 74.16 = 86129$
+这几个对应的tick分别为:
+1. 现货tick: $i_c = log_{\sqrt{1.0001}} 70.71 = 85176$
+2. 下界tick: $i_l = log_{\sqrt{1.0001}} 67.42 = 84222$
+3. 上界tick: $i_u = log_{\sqrt{1.0001}} 74.16 = 86129$
 
-> To calculate these, I used Python:
+> 计算过程使用的是Python：
 > ```python
 > import math
 >
@@ -76,12 +70,9 @@ Let's find the ticks:
 > > 85176
 >```
 
-That's it for price range calculation!
+价格区间的计算就是这样！
 
-Last thing to note here is that Uniswap uses Q64.96 number to store $\sqrt{P}$. This is a fixed point number that has
-64 bits for the integer part and 96 bits for the fractional part. In our above calculations, prices are floating point
-numbers: `70.71`, `67.42`, `74.16`. We need to convert them to Q64.96. Luckily, this is simple: we need to multiply the
-numbers by the maximum value of the fractional part of Q64.96, which is $2^{96}$. We'll get:
+最后需要提到的是，在Solidity中，Uniswap使用Q64.96来存储$\sqrt{p}$。这是一个整数位由64位表示、小数位由96位表示的定点数格式。在我们上面的计算中，价格按照浮点数形式计算：`70.71`, `67.42`, `74.16`。我们需要将它们转换成Q64.96格式，也非常简单：只需要将这个数乘以$2^{96}$，即可得到：
 
 $$\sqrt{P_c} = 5602277097478614198912276234240$$
 
@@ -89,7 +80,7 @@ $$\sqrt{P_l} = 5314786713428871004159001755648$$
 
 $$\sqrt{P_u} = 5875717789736564987741329162240$$
 
-> In Python:
+> 在Python中：
 > ```python
 > q96 = 2**96
 > def price_to_sqrtp(p):
@@ -99,6 +90,7 @@ $$\sqrt{P_u} = 5875717789736564987741329162240$$
 > > 5602277097478614198912276234240
 > ```
 > Notice that we're multiplying before converting to integer. Otherwise, we'll lose precision.
+
 
 ## Token Amounts Calculation
 
