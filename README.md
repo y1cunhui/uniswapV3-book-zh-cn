@@ -69,7 +69,7 @@ https://uniswapv3book.com/
 3. [ ] milestone_1
    1. [x] introduction
    2. [x] calculating-liquidity
-   3. [ ] prividing-liquidity
+   3. [ ] providing-liquidity
    4. [ ] first-swap
    5. [ ] manager-contract
    6. [ ] deployment
