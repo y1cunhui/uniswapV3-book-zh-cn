@@ -1,5 +1,5 @@
 ---
-title: "Providing Liquidity"
+title: "提供流动性"
 weight: 3
 # bookFlatSection: false
 # bookToc: false
@@ -11,37 +11,33 @@ weight: 3
 
 {{< katex display >}} {{</ katex >}}
 
-# Providing Liquidity
 
-Enough of theory, let's start coding!
 
-Create a new folder (mine is called `uniswapv3-code`), and run `forge init --vscode` in it–this will initialize a Forge
-project. The `--vscode` flag tells Forge to configure the Solidity extension for Forge projects.
+# 提供流动性
 
-Next, remove the default contract and its test:
+有了这些理论，我们现在可以开始写代码了！
+
+新建一个文件夹，cd进去运行`forge init --vscode`-来初始化一个Forge项目。加上`--vscode`会让Forge配置vscode的Solidity插件。
+删除其中的合约和测试文件：
 - `script/Contract.s.sol`
 - `src/Contract.sol`
 - `test/Contract.t.sol`
 
-And that's it! Let's create our first contract!
+现在，我们可以开始写我们的第一个合约了~
 
-## Pool Contract
+## 池子合约
 
-As you've learned from the introduction, Uniswap deploys multiple Pool contracts, each of which is an exchange market of
-a pair of tokens. Uniswap groups all its contract into two categories:
+正如我们在简介中提到的那样，Uniswap部署了多个池子合约，每一个都是负责一对token的交易。Uniswap的所有合约被分为以下两类：
+- 核心合约(core contracts)
+- 外部合约(periphery contracts)
+  
+正如其名，核心合约实现了核心的逻辑。这些合约是最小的，对用户**不**友好的，底层的合约。这些合约都只做一件事并且保证这件事尽可能地安全。在Uniswap V3中，核心合约包含以下两个：
+1. 池子(Pool)合约，实现了去中心化交易的核心逻辑
+2. 工厂(Factory)合约，作为池子合约的注册入口，使得部署池子合约更加简单。
 
-- core contracts,
-- and periphery contracts.
+我们将会从池子合约开始，这部分实现了Uniswap 99%的核心功能。
 
-Core contracts are, as the name implies, the contracts that implement core logic. These are minimal, user-**un**friendly,
-low-level contracts. Their purpose is to do one thing and do it as reliably and securely as possible. In Uniswap V3,
-there are 2 such contracts:
-1. Pool contract, which implements the core logic of a decentralized exchange.
-1. Factory contract, which serves as a registry of Pool contracts and a contract that makes deployment of pools easier.
-
-We'll begin with the pool contract, which implements 99% of the core functionality of Uniswap.
-
-Create `src/UniswapV3Pool.sol`:
+创建 `src/UniswapV3Pool.sol`:
 
 ```solidity
 pragma solidity ^0.8.14;
@@ -49,20 +45,16 @@ pragma solidity ^0.8.14;
 contract UniswapV3Pool {}
 ```
 
-Let's think about what data the contract will store:
-1. Since every pool contract is an exchange market of two tokens, we need to track the two token addresses. And these
-addresses will be static, set once and forever during pool deployment (thus, they will be immutable).
-1. Each pool contract is a set of liquidity positions. We'll store them in a mapping, where keys are unique position
-identifiers and values are structs holding information about positions.
-1. Each pool contract will also need to maintain a ticks registry–this will be a mapping with keys being tick indexes and
-values being structs storing information about ticks.
-1. Since the tick range is limited, we need to store the limits in the contract, as constants.
-1. Recall that pool contracts store the amount of liquidity, $L$. So we'll need to have a variable for it.
-1. Finally, we need to track the current price and the related tick. We'll store them in one storage slot to optimize
-gas consumption: these variables will be often read and written together, so it makes sense to benefit from [the state
-variables packing feature of Solidity](https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html).
+让我们想一下这个合约需要存储哪些数据：
+1. 由于每个合约都是一对token的交易市场，我们需要存储两个token的地址。这些地址是静态的，仅设置一次并且保持不变的。(因此，这些变量需要被设置为immutable)
+2. 每个池子合约包含了一系列的流动性位置，我们需要用一个mapping来存储这些信息，key代表不同位置，value是包含这些位置相关的信息。
+3. 每个池子合约都包含一些tick的信息，需要一个mapping来存储tick的编号与对应的信息
+4. tick的范围是固定的，这些范围在合约中存为常数
+5. 需要存储池子流动性的数量$L$
+6. 最后，我们还需要跟踪现在的价格和对应的tock。我们将会把他们存储在一个slot中来节省gas费：因为这些变量会被频繁读写，所以我们需要充分考虑[Solidity变量在存储中的分布特点](https://docs.soliditylang.org/en/v0.8.17/internals/layout_in_storage.html)
 
-All in all, this is what we begin with:
+
+总之，合约大概存储了以下这些信息：
 
 ```solidity
 // src/lib/Tick.sol
