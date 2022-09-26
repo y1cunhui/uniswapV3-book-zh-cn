@@ -107,13 +107,11 @@ contract UniswapV3Pool {
     ...
 ```
 
-Uniswap V3 uses many helper contracts and `Tick` and `Position` are two of them. `using A for B` is a feature of Solidity
-that lets you extend type `B` with functions from library contract `A`. This simplifies managing complex data structures.
+Uniswap V3有很多辅助的合约，`Tick`和`Position`就是其中两个。`using A for B`是Solidity的一个语言特性，能够让你用库合约`A`中的函数来扩展类型`B`，简化了对于复杂数据结构的管理方式。
 
-> For brevity, I'll omit detailed explanation of Solidity syntax and features. Solidity has [great documentation](https://docs.soliditylang.org/en/latest/),
-don't hesitate referring to it if something is not clear!
+> 简洁起见，我会省略掉关于Solidity的语法和特性的一些细节上的解释。Solidity有非常清楚的[文档](https://docs.soliditylang.org/en/latest/)，当遇到相关问题是可以参考这里。
 
-We'll then initialize some of the variables in the constructor:
+接下来，我们在constructor中初始化其中一些变量：
 
 ```solidity
     constructor(
@@ -129,18 +127,13 @@ We'll then initialize some of the variables in the constructor:
     }
 }
 ```
+在构造函数中，我们初始化了不可变的token地址、现在的价格和对应的tick。我们暂时还不需要提供流动性。
 
-Here, we're setting the token address immutables and setting the current price and tick–we don't need to provide liquidity
-for the latter.
+从这里开始，到本节的最后我们会使用我们预先计算好的数值，完成我们的第一笔交易
 
-This is our starting point, and our goal in this chapter is to make our first swap using pre-calculated and hard coded
-values.
+## 铸造(Minting)
 
-## Minting
-
-The process of providing liquidity in Uniswap V2 is called *minting*. The reason is that the V2 pool contract mints
-tokens (LP-tokens) in exchange for liquidity. V3 doesn't do that, but it still uses the same name for the function. Let's
-use it as well:
+在Uniswap V2中，提供流动性被称作*minting(铸造)*，因为Uniswap V2的池子给予LP-token作为提供流动性的交换。V3没有这种行为，但是仍然保留了同样的名字，我们在这里也同样使用这个名字：
 
 ```solidity
 function mint(
@@ -152,22 +145,21 @@ function mint(
     ...
 ```
 
-Our `mint` function will take:
-1. Owner's address, to track the owner of the liquidity.
-1. Upper and lower ticks, to set the bounds of a price range.
-1. The amount of liquidity we want to provide.
+我们的`mint`函数会包含以下参数：
+1. 所有者的地址，来识别是谁提供的流动性
+2. 上界和下界的tick，来设置价格区间的边界
+3. 希望提供的流动性的数量
 
-> Notice that user specifies $L$, not actual token amounts. This is not very convenient of course, but recall that the
-Pool contract is a core contract–it's not intended to be user-friendly because it should implement only the core logic.
-In a later chapter, we'll make a helper contract that will convert token amounts to $L$ before calling `Pool.mint`.
+> 注意到在这里，用户指定了$L$，而不是具体的token数量。这显然不是特别方便，但是要记得池子合约是核心合约的一部分——它并不需要用户友好，因为它仅实现了最小的核心逻辑。在后面章节中，我们会实现一些辅助合约，来帮助用户在调用`Pool.mint`之前将token数目转换成$L$。
 
-Let's outline a quick plan of how minting will work:
-1. a user specifies a price range and an amount of liquidity;
-1. the contract updates the `ticks` and `positions` mappings;
-1. the contract calculates token amounts the user must send (we'll pre-calculate and hard code them);
-1. the contract takes tokens from the user and verifies that correct amounts were set.
+我们简单描述一下铸造函数如何工作：
+1. 用户指定价格区间和流动性的数量
+2. 合约更新`ticks`和`positions`的mapping。
+3. 合约计算出用户需要提供的token数量（在本节我们用事先计算好的值）
+4. 合约从用户处获得token，并且验证数量是否正确
 
-Let's begin with checking the ticks:
+首先来检查ticks：
+
 ```solidity
 if (
     lowerTick >= upperTick ||
@@ -175,13 +167,14 @@ if (
     upperTick > MAX_TICK
 ) revert InvalidTickRange();
 ```
+并且确保流动性的数量不为零：
 
-And ensuring that some amount of liquidity is provided:
 ```solidity
 if (amount == 0) revert ZeroLiquidity();
 ```
 
-Then, add a tick and a position:
+接下来，增加tick和position的信息：
+
 ```solidity
 ticks.update(lowerTick, amount);
 ticks.update(upperTick, amount);
@@ -194,7 +187,7 @@ Position.Info storage position = positions.get(
 position.update(amount);
 ```
 
-The `ticks.update` function is:
+`ticks.update`函数如下所示：
 
 ```solidity
 // src/lib/Tick.sol
@@ -214,11 +207,10 @@ function update(
     tickInfo.liquidity = liquidityAfter;
 }
 ```
+它初始化一个流动性为0的tick，并且在上面添加新的流动性。正如上面所示，我们会在下界tick和上界tick均调用此函数，流动性在两边都有添加。
 
-It initialized a tick if it had 0 liquidity and adds new liquidity to it. As you can see, we're calling this
-function on both lower and upper ticks, thus liquidity is added to both of them.
 
-The `position.update` function is:
+`position.update`函数如下所示:
 ```solidity
 // src/libs/Position.sol
 function update(Info storage self, uint128 liquidityDelta) internal {
@@ -228,7 +220,8 @@ function update(Info storage self, uint128 liquidityDelta) internal {
     self.liquidity = liquidityAfter;
 }
 ```
-Similar to the tick update function, it adds liquidity to a specific position. And to get a position we call:
+与tick的函数类似，它也在特定的位置上添加流动性。其中的get函数如下：
+
 ```solidity
 // src/libs/Position.sol
 ...
@@ -244,25 +237,22 @@ function get(
 }
 ...
 ```
+每个位置都由三个变量所确定：LP地址，下界tick编号，上界tick编号。我们将这三个变量哈希来减少数据存储开销：哈希结果只有32字节，而三个变量分别存储需要96字节。
 
-Each position is uniquely identified by three keys: owner address, lower tick index, and upper tick index.
-We hash the three to make storing of data cheaper: when hashed, every key will take 32 bytes, instead of 96 bytes when
-`owner`, `lowerTick`, and `upperTick` are separate keys.
+> 如果我们使用三个变量来标定，我们就需要三个mapping。每个变量都分别需要32字节的开销，因为solidity会把变量存储在32字节的slot中（此处没有packing）
 
-> If we use three keys, we need three mappings. Each key would be stored separately and would take 32 bytes since Solidity
-stores values in 32-byte slots (when packing is not applied).
+让我们继续完成我们的minting函数。接下来我们需要计算用户需要质押token的数量，幸运的是，我们在上一章中已经用公式计算出了对应的数值。在这里我们会在代码中硬编码这些数据：
 
-Next, continuing with minting, we need to calculate the amounts that the user must deposit. Luckily, we have already figured
-out the formulas and calculated the exact amounts in the previous part. So, we're going to hard code them:
 
 ```solidity
 amount0 = 0.998976618347425280 ether;
 amount1 = 5000 ether;
 ```
 
-> We'll replace these with actual calculations in a later chapter.
+> 在后面的章节中，我们会把这里替换成真正的计算
 
-Now, we're ready to take tokens from the user. This is done via a callback:
+现在，我们可以从用户处获得token了。这部分是通过callback来实现的：
+
 ```solidity
 uint256 balance0Before;
 uint256 balance1Before;
@@ -278,36 +268,26 @@ if (amount1 > 0 && balance1Before + amount1 > balance1())
     revert InsufficientInputAmount();
 ```
 
-First, we record current token balances. Then we call `uniswapV3MintCallback` method on the caller–this is the callback.
-It's expected that the caller (whoever calls `mint`) is a contract because non-contract addresses cannot implement
-functions in Ethereum. Using a callback here, while not being user-friendly at all, let's the contract calculate
-token amounts using its current state–this is critical because we cannot trust users.
+首先，我们记录下现在的token余额。接下来我们调用caller的`uniswapV3MintCallback`方法。预期调用者为合约地址，因为普通用户地址无法实现callback函数。使用callback函数看起来很不用户友好，但是这能够让合约计算token的数量——这非常关键，因为我们无法信任用户。
 
-The caller is expected to implement `uniswapV3MintCallback` and transfer tokens to the Pool contract in this function.
-After calling the callback function, we continue with checking whether the Pool contract balances have changed or not:
-we require them to increase by at least `amount0` and `amount1` respectively–this would mean the caller has transferred
-tokens to the pool.
+调用者需要实现`uniswapV3MintCallback`来将token转给池子合约。调用callback函数后，我们会检查池子合约的对应余额是否发生变化，并且增量应该大于`amount0`和`amount1`：这意味着调用者已经把钱转到了池子。
 
-Finally, we're firing a `Mint` event:
+最后，发出一个Mint事件：
+
 ```solidity
 emit Mint(msg.sender, owner, lowerTick, upperTick, amount, amount0, amount1);
 ```
 
-Events is how contract data is indexed in Ethereum for later search. It's a good practice to fire an event whenever
-contract's state is changed to let blockchain explorer know when this happened. Events also carry useful information.
-In our case it's: caller's address, liquidity position owner's address, upper and lower ticks, new liquidity, and token
-amounts. This information will be stored as a log, and anyone else will be able to collect all contract events and
-reproduce activity of the contract without traversing and analyzing all blocks and transactions.
+事件(Event)是合约数据再以太坊中标定的方式，后续可以据此进行搜索。通常来说，比较好的编程习惯是在合约的状态变量发生改变时发出一个事件，这能够让前端知道这件事情发生了。事件也包含了很多有用的信息，比如：调用者的地址，对应的流动性位置，上界和下界的tick，新的流动性数量，两种token的数量。这些信息会作为日志（log）存储，任何人都可以通过收集这样的日志来重放合约中的状态变动，而不需要去遍历分析所有的区块和交易。
 
-And we're done! Phew! Now, let's test minting.
+现在我们完成了！（出乎意料的简单）。接下来到了测试部分。
 
-## Testing
+## 测试
 
-At this point we don't know if everything works correctly. Before deploying our contract anywhere we're going to write
-a bunch of tests to ensure the contract works correctly. Luckily to us, Forge is a great testing framework and it'll
-make testing a breeze. 
+现在，我们还不知道我们的合约是否正确。在部署我们的合约之前，我们需要写一系列的测试来保证合约功能正常。正如之前所说，Forge是一个绝妙的测试框架，能够让我们的测试十分简单。
 
-Create a new test file:
+创建一个新的测试文件：
+
 ```solidity
 // test/UniswapV3Pool.t.sol
 // SPDX-License-Identifier: UNLICENSED
@@ -324,40 +304,34 @@ contract UniswapV3PoolTest is Test {
 }
 ```
 
-Let's run it:
+我们来运行一下：
 ```shell
 $ forge test
 Running 1 test for test/UniswapV3Pool.t.sol:UniswapV3PoolTest
 [PASS] testExample() (gas: 279)
 Test result: ok. 1 passed; 0 failed; finished in 5.07ms
 ```
+测试通过了！这是显然的，因为目前我们只测试了`true`等于`true`。
 
-It passes! Of course it is! So far, our test only checks that `true` is `true`!
+测试合约都继承自`forge-std/Test.sol`。这个合约实现了一些列的测试功能，我们后续会对这些功能越来越熟悉。如果你现在就一定想知道，可以打开`lib/forge-std/src/Test.sol`简单读一下。
 
-Test contract are just contract that inherit from `forge-std/Test.sol`. This contract is a set of testing utilities, we'll
-get acquainted with them step by step. If you don't want to wait, open `lib/forge-std/src/Test.sol` and skim through it.
+测试合约遵循以下规则：
+1. `setUp`函数用来准备测试样例。在每个测试样例中，我们都希望有一个配置好的环境，比如合约的部署、token的铸造、池子的初始化——这些都将在`setUp`中完成
+2. 每个测试样例以`test`开头，例如`testMint()`。这能够让Forge区分出测试样例和其他的辅助函数（这里我们也可以写任何我们需要的辅助函数）。
 
-Test contracts follow a specific convention:
-1. `setUp` function is used to set up test cases. In each test cases, we want to have a configured environment, like
-deployed contracts, minted tokens, initialized pools–we'll do all this in `setUp`.
-1. Every test case starts with `test` prefix, e.g. `testMint()`. This will let Forge distinguish test cases from helper
-functions (we can also have any function we want).
+现在我们来真正测试minting
 
-Let's now actually test minting.
+### 测试token
 
-### Test Tokens
+为了测试minting功能，我们需要token。这对我们来说不是个问题，因为我们在测试中能够随意部署任何合约！更进一步，Forge能够用依赖的方式安装其他开源合约。在这里，我们需要包含铸造功能的ERC20合约。我们会使用[Solmate](https://github.com/Rari-Capital/solmate)的ERC20合约（Solmate包含了一系列gas优化的合约），并且创建一个继承自Solmate合约的ERC20合约，开放mint接口。
 
-To test minting we need tokens. This is not a problem because we can deploy any contract in tests! Moreover, Forge can
-install open-source contracts as dependencies. Specifically, we need an ERC20 contract with minting functionality. We'll
-use the ERC20 contract from [Solmate](https://github.com/Rari-Capital/solmate), a collection of gas-optimized contracts,
-and make an ERC20 contract that inherits from the Solmate contract and exposes minting (it's public by default).
-
-Let's install `solmate`:
+首先安装`solmate`:
 ```shell
 $ forge install rari-capital/solmate
 ```
 
-Then, let's create `ERC20Mintable.sol` contract in `test` folder (we'll use the contract only in tests):
+之后，在`test`文件夹中创建`ERC20Mintable.sol`合约（因为此合约仅用于测试）：
+
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.14;
@@ -376,15 +350,15 @@ contract ERC20Mintable is ERC20 {
     }
 }
 ```
+我们的`ERC20Mintable`继承了`solmate/tokens/ERC20.sol`的所有功能，并且额外实现了一个public的`mint`方法，能够让我们铸造任意数量的token。
 
-Our `ERC20Mintable` inherits all functionality from `solmate/tokens/ERC20.sol` and we additionally implement public `mint`
-method which will allow us to mint any number of tokens.
 
-### Minting
+### 测试 Minting
 
-Now, we're ready to test minting.
+现在，我们可以进行minting的测试了。
 
-First, let's deploy all the required contracts:
+首先，部署所有需要用到的合约：
+
 ```solidity
 // test/UniswapV3Pool.t.sol
 ...
@@ -403,12 +377,11 @@ contract UniswapV3PoolTest is Test {
 
     ...
 ```
-In the `setUp` function, we deploy tokens but not pools! This is because all our test cases will use the same tokens but
-each of them will have a unique pool.
 
-To make setting up of pools cleaner and simpler, we'll do this in a separate function, `setupTestCase`, that takes a set of
-test case parameters. In our first test case, we'll test successful liquidity minting. This is what the test case
-parameters look like:
+在`setUp`函数中，我们部署了token合约，但是不需要部署池子合约。这是因为所有的测试样例都会使用同样的token，但是可能会使用不同的池子。
+
+为了让池子的设置更加简单清晰，我们将在另外一个函数中完成这部分工作，`setupTestCase`。它接受一系列的测试样例参数，进行池子的设置。在我们的第一个测试样例中，我们会测试成功的流动性铸造，其参数如下所示：
+
 ```solidity
 function testMintSuccess() public {
     TestCaseParams memory params = TestCaseParams({
@@ -423,14 +396,15 @@ function testMintSuccess() public {
         mintLiqudity: true
     });
 ```
-1. We're planning to deposit 1 ETH and 5000 USDC into the pool.
-1. We want the current tick to be 85176, and lower and upper ticks being 84222 and 86129 respectively (we calculated these
-values in the previous chapter).
-1. We're specifying the precalculated liquidity and current $\sqrt{P}$.
-1. We also want to deposit liquidity (`mintLiquidity` parameter) and transfer tokens when requested by the pool contract
-(`shouldTransferInCallback`). We don't want to do this in each test case, so we want have the flags.
 
-Next, we're calling `setupTestCase` with the above parameters:
+1. 我们计划向池子中质押1ETH和5000USDC
+2. 当前的tick为81576，上下界的tick分别为84222和86129（在上一章中计算的结果）
+3. 我们将会指定预先计算好的流动性$L$和现价$\sqrt{P}$
+4. 在本样例中，我们会铸造流动性（`mintLiquidity`参数为true），也会在池子合约调用callback时转给它token（`shouldTransferInCallback`参数为true）。我们并不会在每个测试中都这样做，因此我们有这些参数的设置。
+
+接下来，我们用上述参数调用`setUpTestCase`：
+
+
 ```solidity
 function setupTestCase(TestCaseParams memory params)
     internal
@@ -458,8 +432,9 @@ function setupTestCase(TestCaseParams memory params)
     shouldTransferInCallback = params.shouldTransferInCallback;
 }
 ```
-In this function, we're minting tokens and deploying a pool. Also, when the `mintLiquidity` flag is set, we mint liquidity
-in the pool. At the end, we're setting the `shouldTransferInCallback` flag for it to be read in the mint callback:
+在这个函数中，我们铸造了token，部署了池子合约。由于`mintLiquidity`参数设置为true，我们会在池子中铸造初始流动性。最后，我们设置`shouldTransferInCallback`变量，使得在callback中能读到此参数：
+
+
 ```solidity
 function uniswapV3MintCallback(uint256 amount0, uint256 amount1) public {
     if (shouldTransferInCallback) {
@@ -468,22 +443,19 @@ function uniswapV3MintCallback(uint256 amount0, uint256 amount1) public {
     }
 }
 ```
-It's the test contract that will provide liquidity and will call the `mint` function on the pool, there're no users. The
-test contract will act as a user, thus it can implement the mint callback function.
+在这个测试中，是测试合约提供流动性并且调用池子的`mint`函数，与用户（EOA）无关。测试合约会作为用户，因此它实现了callback函数。测试合约仅仅是个合约而已，你可以用任何你习惯的方式来编写它。
 
-Setting up test cases like that is not mandatory, you can do it however feels most comfortable to you. Test contracts are
-just contracts.
+在`testMineSuccess`中，我们希望池子合约能够：
+1. 从用户处获取正确数量的token
+2. 创建一个关键字和流动性正确的position
+3. 初始化我们声明的上下界tick
+4. 有正确的$\sqrt{P}$和$L$。
 
-In `testMintSuccess`, we want to test that the pool contract:
-1. takes the correct amounts of tokens from us;
-1. creates a position with correct key and liquidity;
-1. initializes the upper and lower ticks we've specified;
-1. has correct $\sqrt{P}$ and $L$.
+我们来实现这些。
 
-Let's do this.
+铸造在`setupTestCase`中实现，我们不需要再写一遍了。这个函数也反悔了我们需要的token数量，我们对其进行检查：
 
-Minting happens in `setupTestCase`, so we don't need to do this again. The function also returns the amounts we have
-provided, so let's check them:
+
 ```solidity
 (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(params);
 
@@ -500,14 +472,16 @@ assertEq(
     "incorrect token1 deposited amount"
 );
 ```
-We expect specific pre-calculated amounts. And we can also check that these amounts were actually transferred to the pool:
+
+我们希望池子里的token数量与我们预先设计好的一致。同样也直接对池子进行检查：
+
 ```solidity
 assertEq(token0.balanceOf(address(pool)), expectedAmount0);
 assertEq(token1.balanceOf(address(pool)), expectedAmount1);
 ```
 
-Next, we need to check the position the pool created for us. Remember that the key in `positions` mapping is a hash? We
-need to calculate it manually and then get our position from the contract:
+接下来，我们需要检查池子创建的position。回忆一下，在`positions`这个mapping中，我们的键值是一个哈希。我们手动计算这个键值并且获得合约中对应的position：
+
 ```solidity
 bytes32 positionKey = keccak256(
     abi.encodePacked(address(this), params.lowerTick, params.upperTick)
@@ -516,10 +490,10 @@ uint128 posLiquidity = pool.positions(positionKey);
 assertEq(posLiquidity, params.liquidity);
 ```
 
-> Since `Position.Info` is a [struct](https://docs.soliditylang.org/en/latest/types.html#structs), it gets destructured
-when fetched: each field gets assigned to a separate variable.
+> 由于`Position.Info`是一个[struct](https://docs.soliditylang.org/en/latest/types.html#structs)，它会在返回时被解构，每个field分别赋值给一个单独的变量。
 
-Next come the ticks. Again, it's straightforward:
+接下来检查ticks：
+
 ```solidity
 (bool tickInitialized, uint128 tickLiquidity) = pool.ticks(
     params.lowerTick
@@ -532,7 +506,7 @@ assertTrue(tickInitialized);
 assertEq(tickLiquidity, params.liquidity);
 ```
 
-And finally, $\sqrt{P}$ and $L$:
+最后，检查$\sqrt{P}$和$L$:
 ```solidity
 (uint160 sqrtPriceX96, int24 tick) = pool.slot0();
 assertEq(
@@ -548,14 +522,14 @@ assertEq(
 );
 ```
 
-As you can see, writing tests in Solidity is not hard!
+我们会发现，用Solidity写测试如此简单。
 
-### Failures
+### 失败
 
-Of course, testing only successful scenarios is not enough. We also need to test failing cases. What can go wrong when
-providing liquidity? Here are a couple of hints:
-1. Upper and lower ticks are too big or too small.
-1. Zero liquidity is provided.
-1. Liquidity provider doesn't have enough of tokens.
+显然，仅仅测试成功的场景是不够的，我们也需要构造一些失败的测试样例。在提供流动性时可能会有哪些错误点？一些提示如下：
+1. 上下界tick太大/太小
+2. 提供流动性数量为0
+3. LP拥有的token数量不足
 
-I'll leave it for you to implement these scenarios! Feel free peeking at [the code in the repo](https://github.com/Jeiwan/uniswapv3-code/blob/milestone_1/test/UniswapV3Pool.t.sol).
+以上测试用例的编写将留作练习。代码也可以在[这个仓库](https://github.com/Jeiwan/uniswapv3-code/blob/milestone_1/test/UniswapV3Pool.t.sol)找到
+
