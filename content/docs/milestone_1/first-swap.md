@@ -1,5 +1,5 @@
 ---
-title: "First Swap"
+title: "第一笔交易"
 weight: 4
 # bookFlatSection: false
 # bookToc: false
@@ -11,41 +11,37 @@ weight: 4
 
 {{< katex display >}} {{</ katex >}}
 
-# First Swap
 
-Now that we have liquidity, we can make our first swap!
+# 第一笔交易
 
-## Calculating Swap Amounts
+现在我们已经有了流动性，我们可以进行我们的第一笔交易了！
 
-First step, of course, is to figure out how to calculate swap amounts. And, again, let's pick and hardcode some amount
-of USDC we're going to trade in for ETH. Let it be 42! We're going to buy ETH for 42 USDC.
+## 计算交易数量
+首先，我们需要知道如何计算交易出入的数量。同样，我们在这小节中也会硬编码我们希望交易的USDC数额，这里我们选择42，也即花费42USDC购买ETH
 
-After deciding how many tokens we want to sell, we need to calculate how many tokens we'll get in exchange. In Uniswap V2,
-we would've used current pool reserves, but in Uniswap V3 we have $L$ and $\sqrt{P}$ and we know the fact that, when
-swapping within a price range, only $\sqrt{P}$ changes and $L$ remains unchanged (Uniswap V3 acts exactly as V2 when
-swapping is done only within one price range). We also know that:
+在决定了我们希望投入的资金量之后，我们需要计算我们会获得多少token。在Uniswap V2中，我们会使用现在池子的资产数量来计算，但是在V3中我们有$L$和$\sqrt{P}$，并且我们知道在交易过程中，$L$保持不变而只有$\sqrt{P}$发生变化（当在同一区间内进行交易时，V3的表现和V2一致）。我们还知道如下公式：
+
 $$L = \frac{\Delta y}{\Delta \sqrt{P}}$$
 
-And... we know $\Delta y$! This is the 42 USDC we're going to trade in! Thus, we can find how selling 42 USDC will affect
-the current $\sqrt{P}$ given the $L$:
+并且，在这里我们知道了$\Delta y$！它正是我们希望投入的42USDC。因此，我们可以根据公式得出投入的 42USDC 会对价格造成多少影响：
+
 
 $$\Delta \sqrt{P} = \frac{\Delta y}{L}$$
 
-In Uniswap V3, we choose **the price we want our trade to lead to** (recall that swapping changes the current price, i.e.
-it moves the current price along the curve). Knowing the target price, the contract will calculate the amount of input
-token it needs to take from us and the respective amount of output token it'll give us.
+在V3中，我们选择**我们希望交易导致的价格变动**（回忆一下，交易使得现价沿着曲线移动）。知道了目标价格(target price)，合约可以计算出投入token的数量和输出token的数量。
 
-Let's plug in our numbers into the above formula:
+我们将数字代入上述公式：
+
 
 $$\Delta \sqrt{P} = \frac{42 \enspace USDC}{1517882343751509868544} = 2192253463713690532467206957$$
 
-After adding this to the current $\sqrt{P}$, we'll get the target price:
+把差价加到现在的$\sqrt{P}$，我们就能得到目标价格：
 
 $$\sqrt{P_{target}} = \sqrt{P_{current}} + \Delta \sqrt{P}$$
 
 $$\sqrt{P_{target}} = 5604469350942327889444743441197$$
 
-> To calculate the target price in Python:
+> 在Python中进行相应计算:
 > ```python
 > amount_in = 42 * eth
 > price_diff = (amount_in * q96) // liq
@@ -58,13 +54,13 @@ $$\sqrt{P_{target}} = 5604469350942327889444743441197$$
 > # New tick: 85184
 > ```
 
-After finding the target price, we can calculate token amounts using the amounts calculation functions from a previous
-chapter:
+知道了目标价格，我们就能计算出投入token的数量和获得token的数量：
+
 
 $$ x = \frac{L(\sqrt{p_b}-\sqrt{p_a})}{\sqrt{p_b}\sqrt{p_a}}$$
 $$ y = L(\sqrt{p_b}-\sqrt{p_a}) $$
 
-> In Python:
+> 用Python:
 > ```python
 > amount_in = calc_amount1(liq, price_next, sqrtp_cur)
 > amount_out = calc_amount0(liq, price_next, sqrtp_cur)
@@ -75,28 +71,26 @@ $$ y = L(\sqrt{p_b}-\sqrt{p_a}) $$
 > # ETH out: 0.008396714242162444
 > ```
 
-To verify the amounts, let's recall another formula:
+我们使用另一个公式验证一下：
 
 $$\Delta x = \Delta \frac{1}{\sqrt{P}} L$$
 
-Using this formula, we can find the amount of ETH we're buying, $\Delta x$, knowing the price change,
-$\Delta\frac{1}{\sqrt{P}}$, and liquidity $L$. Be careful though: $\Delta \frac{1}{\sqrt{P}}$ is not
-$\frac{1}{\Delta \sqrt{P}}$! The former is the change of the price of ETH, and it can be found using this expression:
+使用上述公式，在知道价格变动和流动性数量的情况下，我们能求出我们购买了多少ETH，也即$\Delta x$。一个需要注意的点是： $\Delta \frac{1}{\sqrt{P}}$ 不等于
+$\frac{1}{\Delta \sqrt{P}}$！前者才是ETH价格的变动，并且能够用如下公式计算：
 
 $$\Delta \frac{1}{\sqrt{P}} = \frac{1}{\sqrt{P_{target}}} - \frac{1}{\sqrt{P_{current}}}$$
 
-Luckily, we already know all the values, so we can plug them in right away (this might not fit on your screen!):
+我们知道了公式里面的所有数值，接下来将其带入即可（可能会在屏幕显示上有些问题）：
 
 $$\Delta \frac{1}{\sqrt{P}} = \frac{1}{5604469350942327889444743441197} - \frac{1}{5602277097478614198912276234240}$$
 
 $$\Delta \frac{1}{\sqrt{P}} = -0.00000553186106731426$$
 
-Now, let's find $\Delta x$:
+接下来计算 $\Delta x$:
 
 $$\Delta x = -0.00000553186106731426 * 1517882343751509868544 = -8396714242162698 $$
 
-Which is 0.008396714242162698 ETH, and it's very close to the amount we found above! Notice that this amount is negative
-since we're removing it from the pool.
+即 0.008396714242162698 ETH，这与我们第一次算出来的数量非常接近！注意到这个结果是负数，因为我们是从池子中移出ETH。
 
 ## Implementing a Swap
 
