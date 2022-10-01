@@ -1,5 +1,5 @@
 ---
-title: "Deployment"
+title: "部署合约"
 weight: 6
 # bookFlatSection: false
 # bookToc: true
@@ -11,41 +11,29 @@ weight: 6
 
 {{< katex display >}} {{</ katex >}}
 
-# Deployment
+# 部署
 
-Alright, our pool contract is done. Now, let's see how we can deploy it to a local Ethereum network so we could use it from
-a front-end app later on.
+我们的第一版合约已经完成了。现在，让我们来看看如何把它部署在一个本地以太坊网络上，方便我们之后用前端app交互。
 
+## 选择本地网络
 
-## Choosing Local Blockchain Network
+智能合约的开发需要运行一个本地的网络来在开发过程中进行部署和测试。这样的网络需要具有以下特点：
+1. 真实的区块链。它必须是一个真实的区块链网络而不是一个模拟器，我们希望我们的合约如果能够在这样的网络上正常工作那也一定能在主网上正常工作
+2. 速度。我们希望我们的交易能够快速被执行，这样我们能快速迭代。
+3. 以太币。为了支付gas费，我们需要一些eth，因此我们希望这个网络能够允许我们生成任意数量的eth
+4. cheat code。除了提供标准的API，我们还希望这个网络能让我们做更多的事，例如：在任何地址上部署合约，以任何地址执行交易，直接修改合约状态等等。
 
-Smart contracts development requires running a local network, where you deploy your contracts during development and
-testing. This is what we want from such a network:
-1. Real blockchain. It must be a real Ethereum network, not an emulation. We want to be sure that our contract will work
-in the local network exactly as it would in the mainnet.
-1. Speed. We want our transactions to be minted immediately, so we could iterate quickly.
-1. Ether. To pay transaction fees, we need some ether, and we want the local network to allow us to generate any amount
-of ether.
-1. Cheat codes. Besides providing the standard API, we want a local network to allow us to do more. For example, we want
-to be able to deploy contracts at any address, execute transactions from any address (impersonate other address), change
-contract state directly, etc.
+今天，有许多的工具能够提供这样的功能：
+1. Truffle套件中的[Ganache](https://trufflesuite.com/ganache/)
+2. [Hardhat](https://hardhat.org/)，一套智能合约开发环境，除了包含本地网络节点以外还有很多有用的工具
+3. Foundry中的[Anvil](https://github.com/foundry-rs/foundry/tree/master/anvil)
 
-There are multiple solutions as of today:
-1. [Ganache](https://trufflesuite.com/ganache/) from Truffle Suite.
-1. [Hardhat](https://hardhat.org/), which is a development environment that includes a local node besides other useful
-things.
-1. [Anvil](https://github.com/foundry-rs/foundry/tree/master/anvil) from Foundry.
+所有这些解决方案都能够满足我们的需求。尽管如此，项目现在都逐渐从Ganache（最早的解决方案）迁移到Hardhat（目前使用最广的方案），而Foundry也成为开发者的新宠。Foundry也是上述三个方案中唯一使用Solidity来编写测试的框架（其他框架都使用JavaScript）。除此以外，Foundry还允许使用Solidity来编写部署脚本。因此，由于我们想在各处都使用Solidity，我们会使用 Anvil 来运行一个本地区块链，并且使用Solidity编写部署脚本。
 
-All of these are viable solutions and each of them will satisfy our needs. Having said that, projects have been slowly
-migrating from Ganache (which is the oldest of the solutions) to Hardhat (which seems to be the most widely used these
-days), and now there's the new kid on the block: Foundry. Foundry is also the only of these solutions that uses Solidity
-for writing tests (the others use JavaScript). Moreover, Foundry also allows to write deployment scripts in Solidity.
-Thus, since we've decided to use Solidity everywhere, we'll use Anvil to run a local development blockchain, and we'll
-write deployment scripts in Solidity.
+## 运行本地区块链
 
-## Running Local Blockchain
+Anvil不需要进行配置，我们可以直接在命令行运行：
 
-Anvil doesn't require configuration, we can run it with a single command and it'll do:
 
 ```shell
 $ anvil
@@ -62,13 +50,10 @@ $ anvil
 Listening on 127.0.0.1:8545
 ```
 
-Anvil runs a single Ethereum node, so this is not really a network, but that's ok. By default, it creates 10 accounts
-with 10,000 ETH in each of them. It prints the addresses and related private keys when it starts–we'll be using one of
-these addresses when deploying and interacting with the contract from UI.
+Anvil运行一个以太坊节点，所以它实际上并不是个网络，但也没什么问题。默认配置下它会创建10个账户，每个有10000ETH。它会把这些账户和对应私钥打印在命令行，我们会使用其中一个来部署合约和与其交互。
 
-Anvil exposes JSON-RPC API interface at `127.0.0.1:8545`–this interface is the main way of interacting with Ethereum
-nodes. You can find full API reference [here](https://ethereum.org/en/developers/docs/apis/json-rpc/). And this is how
-you can call it via `curl`:
+Anvil在`127.0.0.1:8545`开放了JSON-RPC API接口——这个接口是与以太坊节点交互的主要方式。你可以在[这里](https://ethereum.org/en/developers/docs/apis/json-rpc/)找到完整的API文档。在这里，你可以用curl与其交互：
+
 ```shell
 $ curl -X POST -H 'Content-Type: application/json' \
   --data '{"id":1,"jsonrpc":"2.0","method":"eth_chainId"}' \
@@ -80,7 +65,7 @@ $ curl -X POST -H 'Content-Type: application/json' \
 {"jsonrpc":"2.0","id":1,"result":"0x21e19e0c9bab2400000"}
 ```
 
-You can also use `cast` (part of Foundry) for that:
+你也可以使用`cast`（foundry中的另一个组件）来访问：
 ```shell
 $ cast chain-id
 31337
@@ -88,20 +73,17 @@ $ cast balance 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
 10000000000000000000000
 ```
 
-Now, let's deploy the pool and manager contracts to the local network.
+现在，我们来将池子合约和管理合约都部署在本地网络上。
 
-## First Deployment
+## 第一次部署
+根本上来讲，部署一个合约意味着：
+1. 将源代码编译成EVM字节码
+2. 发送一个包含这些字节码的交易
+3. 新建一个地址，执行字节码中构造函数的部分，将初始化的字节码存放在该地址。这一步是由以太坊节点自动完成的，在这笔交易被打包上链时。
 
-At its core, deploying a contract means:
-1. Compiling source code into EVM bytecode.
-1. Sending a transaction with the bytecode.
-1. Creating a new address, executing the constructor part of the bytecode, storing initialized bytecode on the address.
-This step is done automatically by an Ethereum node, when your contract creation transaction is mined.
+部署通常包含很多个步骤：准备参数，部署辅助合约，部署主合约，初始化合约等等。脚本能帮助我们自动化完成这些步骤，并且我们现在能用Solidity来编写脚本！
 
-Deployment usually consists of multiple steps: preparing parameters, deploying auxiliary contracts, deploying main
-contracts, initializing contracts, etc. Scripting helps to automate these steps, and we'll write scripts in Solidity!
-
-Create `scripts/DeployDevelopment.sol` contract with this content:
+创建 `scripts/DeployDevelopment.sol` 文件，写入以下内容：
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.14;
@@ -115,44 +97,41 @@ contract DeployDevelopment is Script {
 }
 ```
 
-It looks very similar to the test contract, with only difference is that it inherits from `Script` contract, not from
-`Test`. And, by convention, we need to define `run` function which will be the body of our deployment script. In the
-`run` function, we define the parameters of the deployment first:
+它看起来与测试合约十分相似，唯一的差别在于它继承自`Script`合约而不是`Test`。并且按照惯例，我们需要定义一个`run`函数作为部署脚本的主体。在`run`函数中，我们首先定义部署需要的参数：
+
 ```solidity
 uint256 wethBalance = 1 ether;
 uint256 usdcBalance = 5042 ether;
 int24 currentTick = 85176;
 uint160 currentSqrtP = 5602277097478614198912276234240;
 ```
-These are the same values we used before. Notice that we're about to mint 5042 USDC–that's 5000 USDC we'll provide as
-liquidity into the pool and 42 USDC we'll sell in a swap.
+这些正是我们之前用过的值。这里我们需要铸造5042个USDC——其中5000个用来提供流动性，42个用来交易。
 
-Next, we define the set of steps that will be executed as the deployment transaction (well, each of the steps will be
-a separate transaction). For this, we're using `startBroadcast/endBroadcast` cheat codes:
+接下来，我们定义一系列在部署过程中需要执行的交易（每一步都是独立的交易）。我们使用`startBroadcast/endBroadcast`这个 cheat code:
+
 ```solidity
 vm.startBroadcast();
 ...
 vm.stopBroadcast();
 ```
 
-> These cheat codes are [provided by of Foundry](https://github.com/foundry-rs/foundry/tree/master/forge#cheat-codes).
-We got them in the script contract by inheriting from `forge-std/Script.sol`.
+> 这些cheat code可以在[forge的文档](https://github.com/foundry-rs/foundry/tree/master/forge#cheat-codes)中找到，我们是从继承的`forge-std/Script.sol`里面得到这些功能的。
 
-Everything that goes after the `broadcast()` cheat code or between `startBroadcast()/stopBroadcast()` is converted to
-transactions and these transactions are sent to the node that executes the script.
+在`broadcast()` cheat code后面，或者`startBroadcast()/stopBroadcast()`之间的所有语句都会被转化成交易，这些交易会被发送到执行这个脚本的节点。
 
-Between the broadcast cheat codes, we'll put the actual deployment steps. First, we need to deploy the tokens:
+在这两个cheat code之间，我们开始真正的部署步骤。首先需要部署两种token：
+
+
 ```solidity
 ERC20Mintable token0 = new ERC20Mintable("Wrapped Ether", "WETH", 18);
 ERC20Mintable token1 = new ERC20Mintable("USD Coin", "USDC", 18);
 ```
-We cannot deploy the pool without having tokens, so we need to deploy them first.
+没有token我们就无法部署池子，因此需要先部署token合约
+（译者注：由于原生代币ETH没有approve功能，因此在这里使用的是WETH。在各种金融协议中，原生ETH通常都被单独拿出来处理）
 
-> Since we're deploying to a local development network, we need to deploy the tokens ourselves. In the mainnet and public
-test networks (Ropsten, Goerli, Sepolia), the tokens are already created. Thus, to deploy to those networks, we'll need
-to write network-specific deployment scripts.
+> 由于我们是在本地网络上进行部署，我们需要自行部署对应的token。在主网上和公开测试网上(Ropsten, Goerli, Sepolia)，这些token已经被部署。因此，如果想要在这些网络上进行部署，我们需要写网络特定的部署脚本。
 
-The next step is to deploy the pool contract:
+接下来就是部署池子合约：
 ```solidity
 UniswapV3Pool pool = new UniswapV3Pool(
     address(token0),
@@ -162,21 +141,24 @@ UniswapV3Pool pool = new UniswapV3Pool(
 );
 ```
 
-Next goes Manager contract deployment:
+然后部署管理合约：
 ```solidity
 UniswapV3Manager manager = new UniswapV3Manager();
 ```
 
-And finally, we can mint some amount of ETH and USDC to our address:
+最后，我们给我们自己的地址铸造一些token用来之后交易：
+
 ```solidity
 token0.mint(msg.sender, wethBalance);
 token1.mint(msg.sender, usdcBalance);
 ```
 
-> `msg.sender` in Foundry scripts is the address that sends transactions within the `broadcast` block. We'll be able to
-set it when running scripts.
+> 在Foundry脚本中，`msg.sender`是在`broadcast`块中发送交易的地址。我们可以在运行脚本的时候对其进行设置。
 
-Finally, at the end of the script, add some `console.log` calls to print the addresses of deployed contracts:
+
+在脚本的最后，使用`console.log`打印出对应的地址信息：
+
+
 ```solidity
 console.log("WETH address", address(token0));
 console.log("USDC address", address(token1));
@@ -184,61 +166,52 @@ console.log("Pool address", address(pool));
 console.log("Manager address", address(manager));
 ```
 
-Alright, let's run the script (ensure Anvil is running in another terminal window):
+现在我们来运行这个脚本（确保Anvil在另一个窗口中正在运行）：
+
 ```shell
 $ forge script scripts/DeployDevelopment.s.sol --broadcast --fork-url http://localhost:8545 --private-key $PRIVATE_KEY
 ```
 
-`--broadcast` enables broadcasting of transactions. It's not enabled by default because not every script sends
-transactions. `--fork-url` sets the address of the node to send transactions to. `--private-key` sets the sender wallet:
-a private key is needed to sign transactions. You can pick any of the private keys printed by Anvil when it's starting.
-I took the first one:
-> 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+`--broadcast` 启动交易的广播。它并不是默认开启的因为并不是每一个脚本都需要发送交易。`--fork-url`设置我们要发送交易的节点地址。`--private-key`设置调用者的钱包：需要私钥来签名交易。我们可以选择之前Anvil启动时在命令行打印出来的任何一个私钥。作者选择了第一个地址和私钥。
 
-Deployment takes several seconds. In the end, you'll see a list of transactions it sent. It'll also save transactions
-receipts to `broadcast` folder. In Anvil, you'll also see many lines with `eth_sendRawTransaction`, `eth_getTransactionByHash`,
-and `eth_getTransactionReceipt`–after sending transactions to Anvil, Forge uses the JSON-RPC API to check their status
-and get transaction execution results (receipts).
+部署需要消耗几秒钟。最后，你会看到它发送了一系列的交易。它同时也将交易收据存在了`broadcast`文件夹。在Anvil运行的窗口里，你也能看到很多行例如`eth_sendRawTransaction`, `eth_getTransactionByHash`,
+和 `eth_getTransactionReceipt`这样的信息——在你向Anvil发送交易后，Forge使用 JSON-RPC API来检查它们的状态并且获得交易执行的结果（收据）。
 
-Congratulations! You've just deployed a smart contract!
+恭喜！你刚刚成功部署了一个智能合约！
 
-## Interacting With Contracts, ABI
+## 与合约交互，ABI
 
-Now, let's see how we can interact with the deployed contracts.
+现在，让我们来看看我们如何与已经部署的合约交互。
 
-Every contract exposes a set of public functions. In the case of the pool contract, these are `mint(...)` and `swap(...)`.
-Additionally, Solidity creates getters for public variables, so we can also call `token0()`, `token1()`, `positions()`, etc.
-However, since contracts are compiled bytecodes, **function names are lost during compilation and not stored on
-blockchain**. Instead, every function is identified by a selector, which is the first 4 bytes of the hash of the
-signature of the function. In pseudocode:
+每个合约都由一系列的public函数开放。以池子合约为例，包含`mint(...)` 和 `swap(...)`。除此之外，Solidity为每一个public的变量创建了getter，所以我们也可以调用`token0()`，`token1()`，`positions()`等等，来访问对应变量的值。然而，由于合约都被编译成字节码，**函数名在编译过程中丢失并且不存储在区块链上**。在链上，每个函数都用一个函数选择器(selector)来表示，即函数签名哈希的前4字节。伪代码即为：
+
 ```
 hash("transfer(address,address,uint256)")[0:4]
 ```
 
-> EVM uses [the Keccak hashing algorithm](https://en.wikipedia.org/wiki/SHA-3), which was standardized as SHA-3.
-Specifically, the hashing function in Solidity is `keccak256`.
+> EVM 使用的是 [Keccak 哈希算法](https://en.wikipedia.org/wiki/SHA-3)，标准化名字为SHA-3。特别地，Solidity中的哈希函数名字为`keccak256`。
 
-Knowing this, let's make two calls to the deployed contracts: one will be a low-level call via `curl`, and one will be
-made using `cast`.
+根据以上信息，我们展示两种对于部署的合约进行调用的方法：一种使用`curl`来进行底层的调用，一种使用`cast`。
 
-### Token Balance
-Let's check the WETH balance of the deployer address. The signature of the function is `balanceOf(address)` (as defined
-in [ERC-20](https://eips.ethereum.org/EIPS/eip-20)). To find the
-ID of this function (its selector), we'll hash it and take the first four bytes:
+
+### Token余额
+
+我们来检查一下部署者地址种的WETH余额。这个函数的签名是`balanceOf(address)`（在[ERC-20](https://eips.ethereum.org/EIPS/eip-20)标准种定义），为了计算这个函数的ID（即选择器），我们计算哈希并取前4字节：
+
+
 ```shell
 $ cast keccak "balanceOf(address)"| cut -b 1-10
 0x70a08231
 ```
 
-To pass the address, we simply append it to the function selector (and add left padding up to 32 digits since addresses
-take 32 bytes in function call data):
+要把地址作为参数传递进去，我们把它附在函数选择器的后面（在左边padding到32个字节，因为地址在函数调用中占32字节）：
+
 > 0x70a08231000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266
 
-`0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266` is the address we're going to check balance of. This is our address, the first
-account in Anvil.
 
-Next, we execute `eth_call` JSON-RPC method to make the call. Notice that this doesn't require sending a transaction–this
-endpoint is used to read data from contracts.
+`0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266` 是我们要查看余额的地址。这是本书选择的部署者的地址，也是Anvil创建时的第一个地址。
+
+接下来，我们会使用`eth_call` JSON-RPC 方法来进行这个调用。注意到，这一步不需要发送一个交易——我们仅仅是从合约中读取数据。
 
 ```shell
 $ params='{"from":"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266","to":"0xe7f1725e7734ce288f8367e1bb143e90bb3f0512","data":"0x70a08231000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"}'
@@ -247,46 +220,43 @@ $ curl -X POST -H 'Content-Type: application/json' \
   http://127.0.0.1:8545
 {"jsonrpc":"2.0","id":1,"result":"0x00000000000000000000000000000000000000000000011153ce5e56cf880000"}
 ```
+> "to" 地址是 USDC token 的地址，它是在上一步部署脚本运行时打印出的日志里面的地址。
 
-> The "to" address is the USDC token. It's printed by the deployment script and it can be different in your case.
+以太坊节点返回的结果是字节流，为了理解结果我们需要知道返回值的类型。在`balanceOf`函数中，返回值的类型是`uint256`。用`cast`可以把结果转换成十进制然后转换成ethers单位：
 
-Ethereum nodes return results as raw bytes, to parse them we need to know the type of a returned value. In the case of
-`balanceOf` function, the type of a returned value is `uint256`. Using `cast`, we can convert it to a decimal number and
-then convert it to ethers:
 ```shell
 $ cast --to-dec 0x00000000000000000000000000000000000000000000011153ce5e56cf880000| cast --from-wei
 5042.000000000000000000
 ```
 
-The balance is correct! We minted 42 USDC to our address.
+余额是正确的，我们在自己的地址中有 5042 USDC。
+
+### 现在的tick和价格
+
+上述例子展示了底层的合约调用。通常来说，你永远不会使用`curl`来发起调用，而是使用某个更友好的工具或库。cast在这里也能够帮助我们简化这一过程。
 
 
-### Current Tick and Price
-
-The above example is a demonstration of low-level contract calls. Usually, you never do calls via `curl` and use a tool
-or library that makes it easier. And Cast can help us here again!
-
-Let's get the current price and tick of a pool using `cast`:
+我们来使用`cast`获得当前合约的tick和price:
 ```shell
 $ cast call POOL_ADDRESS "slot0()"| xargs cast --abi-decode "a()(uint160,int24)"
 5602277097478614198912276234240
 85176
 ```
 
-Nice! The first value is the current $\sqrt{P}$ and the second value is the current tick.
+如此容易！第一个值就是我们的$\sqrt{P}$，第二个值就是现在的tick。
 
-> Since `--abi-decode` requires full function signature we have to specify "a()" even though we only want to decode
-function output.
+> 由于 `--abi-decode` 需要完整的函数签名，我们必须声明一个函数名 "a()"，尽管我们只希望解码函数的输出。
+
 
 ### ABI
 
-To simplify interaction with contracts, Solidity compiler can output ABI, Application Binary Interface.
+为了简化与合约的交易，Solidity编译器可以输出ABI，Application Binary Interface（应用二进制接口）。
 
-ABI is a JSON file that contains the description of all public methods and events of a contract. The goal of this file
-is to make it easier to encode function parameters and decode return values. To get ABI with Forge, use this command:
+ABI是一个包含了合约中所有public方法和事件的 JSON 文件。文件的目的在于使得编码函数参数和解码函数输出都更加容易。我们可以通过Forge来获取ABI：
+
 
 ```shell
 $ forge inspect UniswapV3Pool abi
 ```
 
-Feel free skimming through the file to better understand its content.
+可以看一看生成的文件，来更好地理解ABI意味着什么。
