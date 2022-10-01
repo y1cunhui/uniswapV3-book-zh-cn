@@ -92,9 +92,9 @@ $$\Delta x = -0.00000553186106731426 * 1517882343751509868544 = -839671424216269
 
 即 0.008396714242162698 ETH，这与我们第一次算出来的数量非常接近！注意到这个结果是负数，因为我们是从池子中移出ETH。
 
-## Implementing a Swap
+## 实现swap
 
-Swapping is implemented in `swap` function:
+交易在`swap`函数中实现：
 ```solidity
 function swap(address recipient)
     public
@@ -102,10 +102,11 @@ function swap(address recipient)
 {
     ...
 ```
-At this moment, it only takes a recipient, who is a receiver of tokens.
 
-First, we need to find the target price and tick, as well as calculate the token amounts. Again, we'll simply hard code
-the values we calculated earlier to keep things as simple as possible:
+此时，它仅仅接受一个recipient参数，即放出token的接收者。
+
+首先，我们需要计算出目标价格和对应tick，以及token的数量。同样，我们将会在这里硬编码我们之前计算出来的值：
+
 ```solidity
 ...
 int24 nextTick = 85184;
@@ -116,14 +117,16 @@ amount1 = 42 ether;
 ...
 ```
 
-Next, we need to update the current tick and `sqrtP` since trading affects the current price:
+接下来，我们需要更新现在的tick和对应的`sqrtP`：
+
 ```solidity
 ...
 (slot0.tick, slot0.sqrtPriceX96) = (nextTick, nextPrice);
 ...
 ```
 
-Next, the contract sends tokens to the recipient and lets the caller transfer the input amount into the contract:
+然后，合约把对应的token发送给recipient并且让调用者将需要的token转移到本合约：
+
 ```solidity
 ...
 IERC20(token0).transfer(recipient, uint256(-amount0));
@@ -138,11 +141,10 @@ if (balance1Before + uint256(amount1) < balance1())
 ...
 ```
 
-Again, we're using a callback to pass the control to the caller and let it transfer the tokens. After that, we're checking
-that pool's balance is correct and includes the input amount.
+我们使用callback函数来将控制流转移到调用者，让它转入token，之后我们需要通过检查确认caller转入了正确的数额。
 
-Finally, the contract emits a `Swap` event to make the swap discoverable. The event includes all the information about
-the swap:
+最后，合约释放出一个`swap`事件，使得该笔交易能够被监听到。这个事件包含了所有有关这笔交易的信息：
+
 ```solidity
 ...
 emit Swap(
@@ -156,13 +158,13 @@ emit Swap(
 );
 ```
 
-And that's it! The function simply sends some amount of tokens to the specified recipient address and expects a certain
-number of the other token in exchange. Throughout this book, the function will get much more complicated.
+这样就完成了！这个函数的功能仅仅是将一些token发送到了指定的接收地址，并且从调用者处接受一定数量的另一种token。随着本书的进展，这个函数会变得越来越复杂。
 
-## Testing Swapping
+## 测试交易
 
-Now, we can test the swap function. In the same test file, create `testSwapBuyEth` function and set up the test case. This
-test case uses the same parameters as `testMintSuccess`:
+现在，我们来测试`swap`函数。在相同的测试文件中（译者注：`UniswapV3Pool.t.sol`），创建`testSwapBuyEth`函数并进行初始化设置。准备阶段的参数与`testMintSuccess`一致：
+
+
 ```solidity
 function testSwapBuyEth() public {
     TestCaseParams memory params = TestCaseParams({
@@ -181,17 +183,16 @@ function testSwapBuyEth() public {
     ...
 ```
 
-Next steps will be different, however.
+> 我们不会测试流动性是否正确添加到了池子里，因为之前已经有过针对此功能的测试样例了
 
-> We're not going to test that liquidity has been correctly added to the pool since we tested this functionality in the
-other test cases.
+在测试中，我们需要42 USDC：
 
-To make the test swap, we need 42 USDC:
 ```solidity
 token1.mint(address(this), 42 ether);
 ```
 
-Before making the swap, we need to ensure we can transfer tokens to the pool contract when it requests them:
+交易之前，我们还需要实现callback函数，来确保能够将钱转给池子合约：
+
 ```solidity
 function uniswapV3SwapCallback(int256 amount0, int256 amount1) public {
     if (amount0 > 0) {
@@ -203,21 +204,22 @@ function uniswapV3SwapCallback(int256 amount0, int256 amount1) public {
     }
 }
 ```
-Since amounts during a swap can be positive (the amount that's sent to the pool) and negative (the amount that's taken
-from the pool), in the callback, we only want to send the positive amount, i.e. the amount we're trading in.
+由于交易中的数额可以为正或负（从池子中拿走的数量），在callback中我们只发出数额为正的对应token，也即我们希望卖出的token。
 
-Now, we can call `swap`:
+现在我们可以调用`swap`了：
+
 ```solidity
 (int256 amount0Delta, int256 amount1Delta) = pool.swap(address(this));
 ```
 
-The function returns token amounts used in the swap, and we can check them right away:
+函数返回了在本次交易中涉及到的两种token数量，我们需要验证一下它们是否正确：
+
 ```solidity
 assertEq(amount0Delta, -0.008396714242162444 ether, "invalid ETH out");
 assertEq(amount1Delta, 42 ether, "invalid USDC in");
 ```
+接下来，我们需要验证token的确从调用者（译者注：也即本测试合约）处转出：
 
-Then, we need to ensure that tokens were actually transferred from the caller:
 ```solidity
 assertEq(
     token0.balanceOf(address(this)),
@@ -231,7 +233,7 @@ assertEq(
 );
 ```
 
-And sent to the pool contract:
+并且被发送到了池子合约中：
 ```solidity
 assertEq(
     token0.balanceOf(address(pool)),
@@ -245,7 +247,8 @@ assertEq(
 );
 ```
 
-Finally, we're checking that the pool state was updated correctly:
+最后，我们验证池子的状态是否正确更新：
+
 ```solidity
 (uint160 sqrtPriceX96, int24 tick) = pool.slot0();
 assertEq(
@@ -261,8 +264,9 @@ assertEq(
 );
 ```
 
-Notice that swapping doesn't change the current liquidity–in a later chapter, we'll see when it does change it.
+注意到，在这里交易并没有改变池子流动性——在后面的某个章节，我们会看到它将如何改变
 
-## Homework
 
-Write a test that fails with `InsufficientInputAmount` error. Keep in mind that there's a hidden bug 🙂
+## 练习
+
+写一个测试样例，失败并报错`InsufficientInputAmount`。要记得，这里还有一个隐藏的bug🙂

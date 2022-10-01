@@ -70,7 +70,7 @@ https://uniswapv3book.com/
    1. [x] introduction
    2. [x] calculating-liquidity
    3. [x] providing-liquidity
-   4. [ ] first-swap
+   4. [x] first-swap
    5. [ ] manager-contract
    6. [ ] deployment
    7. [ ] user-interface 
