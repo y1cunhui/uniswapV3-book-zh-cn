@@ -23,9 +23,9 @@ weight: 1
 
 模型的图像大致如下：
 
+
 ![Buy ETH for USDC visualization](/images/milestone_1/buy_eth_model.png)
 
-![Liquidity on the curve](/images/milestone_1/curve_liquidity.png)
 
 
 在开始代码部分之前，我们首先来手动计算模型中用到的所有数学参数。为了简单起见，作者将使用Python来进行计算而不是Solidity，因为Solidity在数学计算上有很多细微之处需要考虑。也就是说，我们将会把所有的参数硬编码进池子合约里。这会让我们获得一个最小可用的产品。
