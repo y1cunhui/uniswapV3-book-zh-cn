@@ -47,7 +47,8 @@ https://uniswapv3book.com/
 4. 访问 http://localhost:1313/ (或者在你命令行输出中展示的URL)
 
 ## 译者注
-如果对文章翻译有意见和改进，欢迎提issue和PR（翻译结束前，暂不接受PR）
+如果对文章翻译有意见和改进，欢迎提issue和PR
+（翻译结束前暂不接受PR）
 
 本书原作者的其他两个系列博客也是我非常推荐的，链接附在下面欢迎感兴趣者学习
 
@@ -66,14 +67,14 @@ https://uniswapv3book.com/
    2. [x] constant-function-market-maker
    3. [x] uniswap-v3
    4. [x] dev-environment
-3. [ ] milestone_1
+3. [x] milestone_1
    1. [x] introduction
    2. [x] calculating-liquidity
    3. [x] providing-liquidity
    4. [x] first-swap
-   5. [ ] manager-contract
-   6. [ ] deployment
-   7. [ ] user-interface 
+   5. [x] manager-contract
+   6. [x] deployment
+   7. [x] user-interface 
 4. [ ] milestone_2
 5. [ ] milestone_3
 6. [ ] milestone_4

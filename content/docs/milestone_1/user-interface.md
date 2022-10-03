@@ -1,5 +1,5 @@
 ---
-title: "User Interface"
+title: "UI"
 weight: 7
 # bookFlatSection: false
 # bookToc: true
@@ -11,66 +11,51 @@ weight: 7
 
 {{< katex display >}} {{</ katex >}}
 
-# User Interface
+# UI
 
-Finally, we made it to the final stop of this milestone–building a user interface!
+现在，我们可以进行这个milestone的最后一步了——搭建一个UI！
+
 
 ![Interface of the UI app](/images/milestone_1/ui.png)
 
-Since building a front-end app is not the main goal of this book, I won't show how to build such an app from scratch.
-Instead, I'll show how to use MetaMask to interact with smart contracts.
+由于搭建前端app并不是本书的主要目的，本书将不会讲解如何从头搭建一个这样的前端，而是展示如何使用MetaMask与智能合约进行交互。
 
->If you want to experiment with the app and run it locally, you can fund it in the [ui](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_1/ui)
-folder in the code repo. This is a simple React app, to run it locally set contracts addresses in `App.js` and run `yarn start`.
+> 如果你希望自己尝试这个app，在本地运行它，你可以在代码仓库中的 [ui](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_1/ui)文件夹找到对应代码。这就是一个简单的React应用，本地运行只需要在`App.js`中设置合约地址，然后运行`yarn start`。
 
+## 相关工具一览
 
-## Overview of Tools
+### 什么是MetaMask？
 
-### What is MetaMask?
+MetaMask是一个浏览器插件的以太坊钱包。它能够创建和存储私钥、展示账户余额、允许链接到不同网络、发送和接受以太或其他token——钱包能做的所有事情几乎都可以在其中实现。
 
-MetaMask is an Ethereum wallet implemented as a browser extension. It creates and stores private keys, shows token
-balances, allows to connect to different networks, sends, and receives ether and tokens–everything a wallet has to do.
-
-Besides that, MetaMask acts as a signer and a provider. As a provider, it connects to an Ethereum node and provides an
-interface to use its JSON-RPC API. As a signer, it provides an interface for secure transaction signing, thus it can
-be used to sign any transaction using a private key from the wallet.
-
+除此之外，MetaMask还能够作为signer和provider来运行。作为provider，它链接到一个以太坊节点，并且提供一个接口来使用对应节点的JSON-RPC API。作为一个signer，它提供了一个能够进行安全交易签名的接口，因此能够使用钱包中的私钥来签名任意交易。
+（译者注：signer和provider都是js库中的常用名词，因此在这里不作翻译）
 ![How MetaMask works](/images/milestone_1/metamask.png)
 
-### Convenience Libraries
+### 常用库
 
-MetaMask, however, doesn't provide much functionality: it can only manage accounts and send raw transactions. We need
-another library that will make interaction with contracts easy. And we also want a set of utilities that will make our
-life easier when handling EVM-specific data (ABI encoding/decoding, big numbers handling, etc.).
+事实上，MetaMask也并没有提供那么多的功能：它仅仅是能够管理账户和发送交易。我们需要其他一些库来使得与合约的交互更加容易，并且能更轻松地解析EVM相关的数据。
 
-There are multiple such libraries. The two most popular ones are: [web3.js](https://github.com/ChainSafe/web3.js) and
-[ethers.js](https://github.com/ethers-io/ethers.js/). Picking either of them is a matter of personal preference. To me,
-Ethers.js seems to have a cleaner contract interaction interface, so I'll pick it.
+这样的库有很多，其中最流行的两个是 [web3.js](https://github.com/ChainSafe/web3.js) 和 [ethers.js](https://github.com/ethers-io/ethers.js/)。选择哪一个取决于你的个人喜好。对本书作者来说，选择 Ethers.js 因为其与合约交互的接口更加清晰
 
-## Workflows
+## 工作流
 
-Let's now see how we can implement interaction scenarios using MetaMask + Ethers.js.
+现在，让我们看一下如何使用 MetaMask + Ethers.js 来实现交互。
 
-### Connecting to Local Node
+### 连接到本地节点
 
-To send transactions and fetch blockchain data, MetaMask connects to an Ethereum node. To interact with our contracts,
-we need to connect to the local Anvil node. To do this, open MetaMask, click on the list of networks, click "Add Network",
-and add a network with RPC URL `http://localhost:8545`. It'll automatically detect the chain ID (31337 in the case of Anvil).
+为了能够发送交易和获取区块链数据，MetaMask链接到一个以太坊节点。为了与我们的合约交互，我们需要钱包链接到本地的Anvil节点。打开MetaMask，点击网络列表——添加网络，增加一个网络，RPC URL为`http://localhost:8545`。钱包将会自动检测对应的chain ID（在Anvil中为31331）.
 
-After connecting to the local node, we need to import our private key. In MetaMask, click on the list of addresses, click
-"Import Account", and paste the private key of the address you picked before deploying the contracts. After that, go to
-the assets list and import the addresses of the two tokens. Now you should see balances of the tokens in MetaMask.
+链接到本地节点之后，我们需要导入一个私钥。在MetaMask中，点击地址列表——导入账户，把之前选择的地址对应的私钥粘贴在这里。然后进入资产列表，导入两种token的地址。现在你可以在MetaMask上看到两种token的余额了。
 
-> MetaMask is still somewhat bugged. One problem I struggled with is that it caches blockchain state when connected to
-`localhost`. Because of this, when restarting the node, you might see old token balances and state. To fix this, go to
-the advanced settings and click "Reset Account". You'll need to do this each time after restarting the node.
+> MetaMask实际上有一些bug。一个我经常遇到的bug是，当它连接到本地节点时，它通常会缓存链状态。因此每次重启节点的时候，你有可能会看到旧的余额和状态。解决方法是：打开高级设置，点击“重置账户”。每次重启节点后你可能都需要进行这个步骤。
 
-### Connecting to MetaMask
+### 链接到MetaMask
 
-Not every website is allowed to get access to your address in MetaMask. A website first needs to connect to MetaMask.
-When a new website is connecting to MetaMask, you'll see a window that asks for permissions.
+并不是每一个网站都能够访问到你在MetaMask中的地址。一个网站首先需要链接到MetaMask。当一个新的网站想要连接MetaMask时，你会看到一个弹窗来请求许可。
 
-Here's how to connect to MetaMask from a front-end app:
+前端连接MetaMask的方式如下：
+
 ```js
 // ui/src/contexts/MetaMask.js
 const connect = () => {
@@ -92,27 +77,20 @@ const connect = () => {
 }
 ```
 
-`window.ethereum` is an object provided by MetaMask, it's the interface to communicate with MetaMask. If it's undefined,
-MetaMask is not installed. If it's defined, we can send two requests to MetaMask: `eth_requestAccounts` and `eth_chainId`.
-In fact, `eth_requestAccounts` connects a website to MetaMask. It basically queries an address from MetaMask, and MetaMask
-asks for permission from user. User will be able to choose which addresses to give access to.
+`window.ethereum` 是MetaMask提供的一个对象，是与MetaMask进行交互的接口。如果它是 undefined，说明没有安装MetaMask。如果它是有定义的，我们向MetaMask发送两个请求：`eth_requestAccounts` 和 `eth_chainId`。事实上，`eth_requestAccounts` 把一个网站连接到MetaMask。它向MetaMask请求一个地址，之后MetaMask向用户请求许可。用户能够选择它可以连接的钱包地址。
 
-`eth_chainId` will ask for the chain ID of the node MetaMask is connected to. After obtaining an address and chain ID,
-it's a good practice to display them in the interface:
+`eth_chainId` 会请求MetaMask连接到的节点的 chain ID
+。在获取地址和chain ID之后，通常可以把它展示在前端页面：
 
 ![MetaMask is connected](/images/milestone_1/ui_metamask_connected.png)
 
-### Providing Liquidity
+### 提供流动性
 
-To provide liquidity into the pool, we need to build a form that asks the user to type the amounts they want to deposit.
-After clicking "Submit", the app will build a transaction that calls `mint` in the manager contract and provides the 
-amounts chosen by users. Let's see how to do this.
+为了向池子中提供流动性，我们需要搭建一个表单，要求用户填入希望质押的token数量。在点击 “Submit” 之后，前端会构建一个交易调用管理合约的`mint`函数并且把用户填入的数量作为参数传递。我们来看一下这个功能如何实现。
 
-Ether.js provides `Contract` interface to interact with contracts. It makes our life much easier, since it takes on the job
-of encoding function parameters, creating a valid transaction, and handing it over to MetaMask. For us, calling contracts
-looks like calling asynchronous methods on a JS object.
+Ether.js 提供了 `Contract` 接口来与合约交互。它让这个过程变得十分简单，因为它替我们完成了编码函数参数、创建一个合法交易、把数据交给MetaMask这几个步骤。对于我们来说，调用合约就像调用一个JS对象的异步方法一样。
 
-Let's see how to create an instance of `Contracts`:
+让我们来看看如何建立一个 `Contract` 的实例：
 
 ```js
 token0 = new ethers.Contract(
@@ -121,12 +99,10 @@ token0 = new ethers.Contract(
   new ethers.providers.Web3Provider(window.ethereum).getSigner()
 );
 ```
+一个`Contract`实例是一个地址和部署在这个地址上的合约的ABI。我们需要ABI来与合约进行交互。第三个参数是由MetaMask提供的signer接口——用来让JS合约调用MetaMask签名交易。
 
-A `Contract` instance is an address and the ABI of the contract deployed at this address. The ABI is needed to interact
-with the contract. The third parameter is the signer interface provided by MetaMask–it's used by the JS contract instance
-to sign transactions via MetaMask.
+现在，我们添加一个函数，来为池子增加流动性：
 
-Now, let's add a function for adding liquidity to the pool:
 ```js
 const addLiquidity = (account, { token0, token1, manager }, { managerAddress, poolAddress }) => {
   const amount0 = ethers.utils.parseEther("0.998976618347425280");
@@ -141,9 +117,10 @@ const addLiquidity = (account, { token0, token1, manager }, { managerAddress, po
   ...
 ```
 
-The first thing to do is to prepare the parameters. We use the same values we calculated earlier.
+第一项就是要准备参数。我们还是使用之前手动计算出来的值。
 
-Next, we allow the manager contract to take our tokens. First, we check the current allowances:
+接下来，我们需要允许允许管理合约操作我们的token。首先检查一下现在的许可情况：
+
 ```js
 Promise.all(
   [
@@ -152,10 +129,8 @@ Promise.all(
   ]
 )
 ```
+然后我们会检查现在的许可是否足够完成这笔交易。如果不够，我们需要发送一个`approve`交易，让用户同意管理合约花费他的一定数量的token。在确保用户approve足够的数量之后，我们调用`manager.mint`来添加流动性：
 
-Then, we check if either of them is enough to transfer a corresponding amount of tokens. If not, we're sending an `approve`
-transaction, which asks the user to approve spending of a specific amount to the manager contract. After ensuring that
-the user has approved full amounts, we call `manager.mint` to add liquidity:
 ```js
 .then(([allowance0, allowance1]) => {
   return Promise.resolve()
@@ -179,31 +154,24 @@ the user has approved full amounts, we call `manager.mint` to add liquidity:
 })
 ```
 
-> `lt` is a method of [BigNumber](https://docs.ethers.io/v5/api/utils/bignumber/). Ethers.js uses BigNumber to represent
-`uint256` type, for which JavaScript [doesn't have enough precision](https://docs.ethers.io/v5/api/utils/bignumber/#BigNumber--notes-safenumbers).
-This is one of the reasons why we want a convenience library.
+> `lt` 是[BigNumber](https://docs.ethers.io/v5/api/utils/bignumber/)的一个方法。Ethers.js 使用 BigNumber来代表`uint256`类型，因为JavaScript本身[精度不足](https://docs.ethers.io/v5/api/utils/bignumber/#BigNumber--notes-safenumbers)。这也是我们希望有一个库的原因。
 
-This is pretty much similar to the test contract, besides the allowances part.
+除了token许可的部分以外，这跟测试合约基本一致。
 
-`token0`, `token1`, and `manager` in the above code are instances of `Contract`. `approve` and `mint` are contract
-functions, which were generated dynamically from the ABIs we provided when instantiated the contracts. When calling these
-methods, Ethers.js:
-1. encodes function parameters;
-1. builds a transaction;
-1. passes the transaction to MetaMask and asks to sign it; user sees a MetaMask window and presses "Confirm";
-1. sends the transaction to the node MetaMask is connected to;
-1. returns a transaction object with full information about the sent transaction.
+上述代码中的`token0`, `token1`, 和 `manager` 都是`Contract`的实例。`approve` 和 `mint` 都是合约函数，是从我们初始化合约时提供的ABI中动态生成的。当调用这些方法时，Ethers.js会：
+1. 编码函数参数；
+2. 构建一个交易；
+3. 将交易传递给MetaMask并请求签名；用户看到MetaMask弹窗并点击“确认”；
+4. 将交易发送给MetaMask连接的节点；
+5. 返回包含这笔交易完整信息的一个对象。
 
-The transaction object also contains `wait` function, which we call to wait for a transaction to be mined–this allows
-us to wait for a transaction to be successfully executed before sending another.
+交易对象包含一个`wait`函数，我们调用它来等待一个交易上链——这能够让我们等待这一笔交易成功再执行下一笔交易。
 
-> Ethereum requires a strict order of transaction. Remember the nonce? It's an account-wide index of transactions, sent
-by this account. Every new transaction increases this index, and Ethereum won't mine a transaction until a previous
-transaction (one with a smaller nonce) was mined.
+> 以太坊对于交易顺序有严格要求。还记得nonce嘛？它是账户级别对于交易的index。每一笔新的交易都会增加这个index，并且以太坊只有在上一笔交易（nonce更小的交易）执行完成后才会执行下一笔交易。
 
-### Swapping Tokens
+### 交易Token
 
-To swap tokens, we use the same pattern: get parameters from the user, check allowance, call `swap` on the manager.
+在交易token时，我们使用相同的模式：从用户输入获取参数，检查许可，调用管理合约的`swap`。
 
 ```js
 const swap = (amountIn, account, { tokenIn, manager, token0, token1 }, { managerAddress, poolAddress }) => {
@@ -231,25 +199,19 @@ const swap = (amountIn, account, { tokenIn, manager, token0, token1 }, { manager
 }
 ```
 
-The only new thing here is `ethers.utils.parseEther()` function, which we use to convert numbers to wei, the smallest
-unit in Ethereum.
+唯一新出现的函数就只有 `ethers.utils.parseEther()`，用来把ether单位的数值转换成wei单位，以太坊中的最小单位（译者注：也即合约中使用的单位）。
 
-### Subscribing to Changes
+### 订阅更新
 
-For a decentralized application, it's important to reflect the current blockchain state. For example, in the case of a
-decentralized exchange, it's critical to properly calculate swap prices based on current pool reserves; outdated data
-can cause slippage and make a swap transaction fail.
+对于一个去中心化的应用，反应当前的区块链状态时很重要的。例如，在一个去中心化的交易市场中，正确地计算现在的价格是很重要的；过时的数据可能会导致滑点(slippage)并使得交易失败。
 
-While developing the pool contract, we learned about events, which act as blockchain data indexes: whenever smart contract
-state is modified, it's a good practice to emit an event since events are indexed for quick search. What we're going to
-do now, is to subscribe to contract events to keep our front-end app updated. Let's build an event feed!
+当开发池子合约的时候，我们学习过event，它能够作为区块链数据的索引：无论何时智能合约的状态发生改变都发出一个event是种好习惯，因为event
+能够作为索引帮助快速搜索需要的信息。我们现在需要做的，就是订阅合约的event来保证前端app的实时更新。让我们来实现这部分吧！
 
-If you checked the ABI file as I recommended earlier, you saw that it also contains description of events: event
-name and its fields. Well, [Ether.js parses them](https://docs.ethers.io/v5/api/contract/contract/#Contract--events) and
-provides an interface to subscribe to new events. Let's see how this works.
+如果你在之前看过了上一章forge生成的ABI，你会发现其中也包含event的描述：名字和参数。很棒的是：[Ethers.js会处理它们]并且为我们提供一个接口来订阅新的event。我们来看一下它是怎么工作的。
 
-To subscribe to events, we'll use `on(EVENT_NAME, handler)` function. The callback receives all the fields of the event
-and the event itself as parameters:
+订阅事件需要使用`on(EVENT_NAME, handler)`函数。callback会接受event的所有值和event本身来作为参数：
+
 ```js
 const subscribeToEvents = (pool, callback) => {
   pool.on("Mint", (sender, owner, tickLower, tickUpper, amount, amount0, amount1, event) => callback(event));
@@ -257,7 +219,8 @@ const subscribeToEvents = (pool, callback) => {
 }
 ```
 
-To filter and fetch previous events, we can use `queryFilter`:
+如果想要筛选和拿到之前的event，我们可以使用`queryFilter`：
+
 ```js
 Promise.all([
   pool.queryFilter("Mint", "earliest", "latest"),
@@ -267,9 +230,8 @@ Promise.all([
 });
 ```
 
-You probably noticed that some event fields are marked as `indexed`–such fields are indexed by Ethereum nodes, which lets
-search events by specific values in such fields. For example, the `Swap` event has `sender` and `recipient` fields
-indexed, so we can search by swap sender and recipient. And again, Ethere.js makes this easier:
+你可能注意到，event中的一些参数被标注为`indexed`——这样的域能够被以太坊节点作为索引，允许通过某些域的值来搜索事件。例如，`Swap`事件有`sender` 和 `recipient`两个域被标注为`indexed`，因此我们可以通过交易的发送者和接收者来搜索对应交易。Ethers.js当然也提供了这个功能：
+
 ```js
 const swapFilter = pool.filters.Swap(sender, recipient);
 const swaps = await pool.queryFilter(swapFilter, fromBlock, toBlock);
@@ -277,7 +239,8 @@ const swaps = await pool.queryFilter(swapFilter, fromBlock, toBlock);
 
 ---
 
-And that's it! We're done with milestone 1!
+OK！现在我们彻底完成了milestone 1!
+
 
 <p style="font-size:3rem; text-align: center">
 🎉🍾🍾🍾🎉
