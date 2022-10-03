@@ -10,8 +10,13 @@ weight: 0
 ---
 
 # Uniswap V3 Book 中文版
+[English](https://uniswapv3book.com/)/中文
+
+
 
 ## 🚧 IN DEVELOPMENT 🚧
+
+
 
 **本书仍然在修订中，暂未完工. All `TODO`s will be replaced with something
 useful.**
