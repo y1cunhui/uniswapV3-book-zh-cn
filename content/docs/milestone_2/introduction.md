@@ -1,5 +1,5 @@
 ---
-title: "Introduction"
+title: "简介"
 weight: 1
 # bookFlatSection: false
 # bookToc: true
@@ -9,23 +9,18 @@ weight: 1
 # bookSearchExclude: false
 ---
 
-# Second Swap
+# 第二笔交易
 
-Alright, this is where it gets real. So far, our implementation has been looking too synthetic and static. We have
-calculated and hard coded all the amounts to make the learning curve less steep, and now we're ready to make it dynamic.
-We're going to implement the second swap, that is a swap in the opposite direction: sell ETH to buy USDC. To do this,
-we're going to improve our smart contracts significantly:
-1. We need to implement math calculations in Solidity. However, since implementing math in Solidity is tricky due to
-Solidity supporting only integer division, we'll use third-party libraries.
-1. We'll need to let users choose swap direction, and the pool contract will need to support swapping in both directions.
-We'll improve the contract and will bring it closer to multi-range swaps, which we'll implement in the next milestone.
-1. Finally, we'll update the UI to support swaps in both directions AND output amount calculation! This will require us
-implementing another contract, Quoter.
+OK，现在才是真正的开始。到目前为止，我们的实现看起来过于手动并且静态。我们手动计算了所有参数，硬编码了各种数量，来让学习曲线不那么陡峭；现在我们准备要让它真正地自动化工作了。我们将会实现第二笔交易，这次的交易是相反的方向：卖出ETH来获得USDC。为了达到这个目的，我们需要大幅度改进我们目前的合约：
+1. 我们需要在Solidity中实现数学运算。但是，由于Solidity仅支持整数除法，在Solidity中实现数学运算会比较困难。我们将使用第三方库来完成这部分
+2. 我们需要让用户能够选择交易的方向，并且池子合约需要支持双向的交易。我们将会改进合约，离跨价格区间的交易更进一步，而我们将在下一个milestone真正实现它。
+3. 最后，我们需要更新我们的UI来实现双向的交易以及获取金额的计算。这需要我们实现另一个合约，报价合约(Quoter)。
 
-In the end of this milestone, we'll have an app that works almost like a real DEX!
+在本章节的最后，我们将会获得一个几乎和真正DEX类似的app！
 
-Let's begin!
+让我们开始吧
 
-> You'll find the complete code of this chapter in [this Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_2).
+> 本章节的所有代码可以在[这个Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_2)找到
 >
-> This milestone introduces a lot of code changes in existing contracts. [Here you can see all changes since the last milestone](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_1...milestone_2)
+> 本章会对我们之前实现的合约进行大量的更新。 [在这里你可以看到与上一个milestone的所有代码差别](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_1...milestone_2)
+
