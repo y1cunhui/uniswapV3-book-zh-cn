@@ -76,6 +76,14 @@ https://uniswapv3book.com/
    6. [x] deployment
    7. [x] user-interface 
 4. [ ] milestone_2
+   1. [ ] introduction
+   2. [ ] output-amount-calculation
+   3. [ ] math-in-solidity
+   4. [ ] tick-bitmap-index
+   5. [ ] generalize-minting
+   6. [ ] generalize-swapping
+   7. [ ] quoter-contract
+   8. [ ] user-interface
 5. [ ] milestone_3
 6. [ ] milestone_4
 7. [ ] milestone_5
