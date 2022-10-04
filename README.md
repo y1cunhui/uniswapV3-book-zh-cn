@@ -78,7 +78,7 @@ https://uniswapv3book.com/
 4. [ ] milestone_2
    1. [x] introduction
    2. [x] output-amount-calculation
-   3. [ ] math-in-solidity
+   3. [x] math-in-solidity
    4. [ ] tick-bitmap-index
    5. [ ] generalize-minting
    6. [ ] generalize-swapping
