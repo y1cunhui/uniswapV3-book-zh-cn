@@ -1,5 +1,5 @@
 ---
-title: "Output Amount Calculation"
+title: "输出金额计算"
 weight: 2
 # bookFlatSection: false
 # bookToc: true
@@ -11,38 +11,33 @@ weight: 2
 
 {{< katex display >}} {{</ katex >}}
 
-# Output Amount Calculation
+# 输出金额计算
 
-Our collection of Uniswap math formulas lacks a final piece: the formula of calculating the output amount when selling
-ETH (that is: selling token $x$). In the previous milestone, we had an analogous formula for the scenario when ETH is
-bought (buying token $x$):
+我们的Uniswap数学公式中还缺最后一个组成部分：计算卖出 ETH (即 token $x$ )时获得的资产数量。在前一章中，我们有一个类似的公式计算购买ETH(购买 token $x$)的场景：
 
 $$\Delta \sqrt{P} = \frac{\Delta y}{L}$$
 
-This formula finds the change in the price when selling token $y$. We then added this change to the current price to
-find the target price:
+这个公式计算卖出token $y$时的价格变化。我们把这个差价加到现价上面，来得到目标价格：
 
 $$\sqrt{P_{target}} = \sqrt{P_{current}} + \Delta \sqrt{P}$$
 
-Now, we need a similar formula to find the target price when selling token $x$ (ETH in our case) and buying token $y$
-(USDC in our case).
+现在，我们需要一个类似的公式来计算卖出 token $x$（在本案例中为 ETH）买入 token $y$（在本案例中为 USDC）时的目标价格（在本案例中为卖出 ETH）。
 
-Recall that the change in token $x$ can be calculated as:
+回忆一下，token $x$ 的变化可以如下计算：
 
 $$\Delta x = \Delta \frac{1}{\sqrt{P}}L$$
 
-From this formula, we can find the target price:
+从上面公式，我们可以推导出目标价格：
 
 $$\Delta x = (\frac{1}{\sqrt{P_{target}}} - \frac{1}{\sqrt{P_{current}}}) L$$
 $$= \frac{L}{\sqrt{P_{target}}} - \frac{L}{\sqrt{P_{current}}}$$
 
-From this, we can find $\sqrt{P_{target}}$ using basic algebraic transformations:
 
-$$\sqrt{P_{target}} = \frac{\sqrt{P}L}{\Delta x \sqrt{P} + L}$$
+$$\\ \sqrt{P_{target}} = \frac{\sqrt{P}L}{\Delta x \sqrt{P} + L}$$
 
-Knowing the target price, we can find the output amount similarly to how we found it in the previous milestone.
+知道了目标价格，我们就能够用前一章类似的方式计算出输出的金额
 
-Let's update our Python script with the new formula:
+更新一下对应的Python脚本
 ```python
 # Swap ETH for USDC
 amount_in = 0.01337 * eth
@@ -62,7 +57,7 @@ print("ETH in:", amount_in / eth)
 print("USDC out:", amount_out / eth)
 ```
 
-Its output:
+输出：
 ```shell
 Selling 0.01337 ETH
 New price: 4993.777388290041
@@ -72,8 +67,6 @@ ETH in: 0.013369999999998142
 USDC out: 66.80838889019013
 ```
 
-Which means that we'll get 66.8 USDC when selling 0.01337 ETH using the liquidity
-we provided in the previous step.
+上述结果显示，在之前提供流动性的基础上，卖出0.01337 ETH 可以获得 66.8 USDC。
 
-This looks good, but enough of Python! We're going to implement all the
-math calculations in Solidity.
+这看起来还不错，但是我们已经受够了使用Python！下面我们将会在Solidity中实现所有的数学计算。

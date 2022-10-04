@@ -77,7 +77,7 @@ https://uniswapv3book.com/
    7. [x] user-interface 
 4. [ ] milestone_2
    1. [x] introduction
-   2. [ ] output-amount-calculation
+   2. [x] output-amount-calculation
    3. [ ] math-in-solidity
    4. [ ] tick-bitmap-index
    5. [ ] generalize-minting
