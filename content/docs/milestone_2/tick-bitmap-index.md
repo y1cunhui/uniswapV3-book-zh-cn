@@ -12,9 +12,10 @@ weight: 4
 {{< katex display >}} {{</ katex >}}
 
 # Tick Bitmap Index
+(译者注：由于bitmap也是数据结构中的常见名词，所以在此不做翻译)
 
-As the first step towards dynamic swaps, we need to implement an index of ticks. In the previous milestone, we used to
-calculate the target tick when making a swap:
+作为我们开始动态交易的第一步，我们需要建立一个ticks的索引。在前一个milestone中，我们手动计算并硬编码了目标位置的tick：
+
 ```solidity
 function swap(address recipient, bytes calldata data)
     public
@@ -25,28 +26,20 @@ function swap(address recipient, bytes calldata data)
 }
 ```
 
-When there's liquidity provided in different price ranges, we cannot simply calculate the target tick. We need to **find
-it** depending on the amount of liquidity in different price ranges. Thus, we need to index all ticks that have liquidity
-and then use the index to find ticks to "fill" enough liquidity for a swap. In this step, we're going to implement such
-index.
+当流动性在不同的价格区间中时，我们很难简单地**计算**出目标tick。事实上，我们需要根据不同区间中的流动性来**找到**它。因此，我们需要对于所有拥有流动性的tick建立一个索引，之后使用这个索引来寻找tick直到“填满”当前交易所需的流动性。在本小节中，我们将会实现一个这样的索引。
 
 ## Bitmap
 
-Bitmap is a popular technique of indexing data in a compact way. A bitmap is simply an array of zeros and ones, where
-each element as and index and corresponds to some external entity (something that's indexed). Each element can be a zero
-or a one, which can be seemed as setting a flag: when 0, flag is not set; when 1, flag is set. What makes this approach
-favorable is that the whole array can be stored as a single number in the binary number system!
+Bitmap是一个用压缩的方式提供数据索引的常用数据结构。一个bitmap实际上就是一个0和1构成的数组，其中的每一位的位置和元素内容都代表某种外部的信息。每个元素可以是0或者1，可以被看做是一个flag：当值为0的时候，flag没有设置；当值为1的时候，flag被设置。这个方法受欢迎的原因是整个数组可以作为二进制被存在一个数字中。
 
-For example, the array `111101001101001` is number 31337. The number takes two bytes (0x7a69) and two bytes can store 16
-flags (1 byte = 8 bits).
+例如，数组`111101001101001`就是数字31337。这个数字需要两个字节来存储（0x7a69），两字节能够存储16个flag（1字节=8位）。
 
-Uniswap V3 uses this technique to store the information about initialized ticks, that is ticks with some liquidity. When
-a flag is set (1), the tick has liquidity; when flag is not set (0), the tick is not initialized. Let's review the
-implementation.
+Uniswap V3 使用这个技术来存储关于tick初始化的信息，也即哪个tick有流动性。当flag设置为(1)，对应的tick有流动性；当flag设置为(0)，对应的tick没有被初始化。让我们来看一下如何实现。
 
-## TickBitmap Contract
+## TickBitmap合约
 
-In the pool contract, the tick index is stored in a state variable:
+在池子合约中，tick index存储为一个状态变量：
+
 ```solidity
 contract UniswapV3Pool {
     using TickBitmap for mapping(int16 => uint256);
@@ -55,13 +48,11 @@ contract UniswapV3Pool {
 }
 ```
 
-This is mapping where keys are `int16`'s and values are words (`uint256`). Imagine an infinite continuous array of ones
-and zeros:
+这里的存储方式是一个mapping，key的类型是`int16`，value的类型是`uint256`。想象一个无穷的0/1数组：
 
-[TODO: add illustration]
+![Tick indexes in tick bitmap](/images/milestone_2/tick_bitmap.png)
 
-Each element in this array corresponds to a tick. To navigate in this array, we break it into words: sub-arrays of
-length 256 bits. To find tick's position in this array, we do:
+数组中每个元素都对应一个tick。为了更好地在数组中寻址，我们把数组按照字的大小划分：每个子数组为256位。为了找到数组中某个tick的位置，我们使用如下函数：
 
 ```solidity
 function position(int24 tick) private pure returns (int16 wordPos, uint8 bitPos) {
@@ -70,10 +61,10 @@ function position(int24 tick) private pure returns (int16 wordPos, uint8 bitPos)
 }
 ```
 
-That is: we find its word position and then its bit in this word. `>> 8` is identical to division by 256. So, word
-position is the integer part of tick index divided by 256, and bit position is the remainder.
+即：我们首先找到对应的字所在的位置，然后再找到字中的位的位置。`>>8`即除以256。除以256的商为字的位置，余数为位的位置。
 
-As an example, let's calculate word and bit positions for one of our ticks:
+举个例子，我们来计算一下我们某个tick的位置：
+
 ```python
 tick = 85176
 word_pos = tick >> 8 # or tick // 2**8
@@ -82,10 +73,10 @@ print(f"Word {word_pos}, bit {bit_pos}")
 # Word 332, bit 184
 ```
 
-### Flipping Flags
+### 翻转flag
 
-When adding liquidity into a pool, we need to set a couple of tick flags in the bitmap: one for the lower tick and one
-for the upper tick. We do this in `flipTick` method of the bitmap mapping:
+当在池子中添加流动性时，我们需要在bitmap中设置一些tick的flag：下界一个上界一个。我们通过`flipTick`方法来实现：
+
 ```solidity
 function flipTick(
     mapping(int16 => uint256) storage self,
@@ -99,44 +90,43 @@ function flipTick(
 }
 ```
 
-> Until later in the book, `tickSpacing` is always 1.
+> 直到本书的后面章节之前，`tickSpacing`的值一直为1.
 
-After finding word and bit positions, we need to make a mask. A mask is a number that has a single 1 flag set at the
-bit position of the tick. To find the mask, we simply calculate `2**bit_pos` (equivalent of `1 << bit_pos`):
+找到对应的tick位置之后，我们需要生成一个掩码(mask)。一个掩码是一个仅有某一位（tick对应的位）为1的数字。为了计算掩码，我们只需要计算`2**bit_pos` (等于 `1 << bit_pos`)：
+
 ```python
 mask = 2**bit_pos # or 1 << bit_pos
 print(bin(mask))
 #0b10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 ```
 
-Next, to flip a flag, we apply the mask to the tick's word via bitwise XOR:
+接下来，为了翻转一个flag，我们将掩码与对应的word进行异或：
+
 ```python
 word = (2**256) - 1 # set word to all ones
 print(bin(word ^ mask))
 #0b11111111111111111111111111111111111111111111111111111111111111111111111->0<-1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 ```
 
-You'll see that 184th bit (counting from the right starting at 0) has flipped to 0.
+可以看到第184位被翻转成了0
 
-### Finding Next Tick
+### 找到下一个tick
 
-Next step is finding ticks with liquidity using the bitmap index.
+接下来是通过bitmap索引来寻找带有流动性的tick。
 
-During swapping, we need to find a tick with liquidity that's before or after the current tick (that is: to the left or
-to the right of it). In the previous milestone, we used to [calculate and hard code it](https://github.com/Jeiwan/uniswapv3-code/blob/85b8605c37a9065c141a234ee2c18d9507eeba22/src/UniswapV3Pool.sol#L142),
-but now we need to find such tick using the bitmap index. We'll do this in `TickMath.nextInitializedTickWithinOneWord`
-method. In this function, we'll need to implement two scenarios:
+在swap过程中，我们需要找到现在tick左边或者右边的下一个有流动性的tick。在前一章中，我们[手动计算并硬编码这个值](https://github.com/Jeiwan/uniswapv3-code/blob/85b8605c37a9065c141a234ee2c18d9507eeba22/src/UniswapV3Pool.sol#L142)。但现在我们需要使用bitmap索引来找到这个值。我们会在 `TickMath.nextInitializedTickWithinOneWord` 方法中实现它。在这个函数中，需要实现两个场景：
+1. 当卖出token $x$ (在这里即ETH)时，找到在同一个word内当前tick的**右边**下一个有流动性的tick。
+2. 当卖出token $y$ (在这里即USDC)时，找到在同一个word内当前tick的**左边**下一个有流动性的tick。
 
-1. When selling token $X$ (ETH in our case), find next initialized tick in the current tick's word and **to the right** of the current tick.
-1. When selling token $Y$ (USDC in our case), find next initialized tick in the next (current + 1) tick's word and **to the left** of the current tick.
+这分别对应两个方向交易时价格的移动：
 
-This corresponds to the price movement when making swaps in either directions:
+![Finding next initialized tick during a swap](/images/milestone_2/find_next_tick.png)
 
-[TODO: add illustration, price change direction and tick change direction]
+> 注意到，在代码中，方向是相反的：当购买token $x$时，我们实际上在搜寻**左边**的流动性tick；当卖出token $x$时，我们搜寻**右边**的tick。这仅仅在word内部成立，而word之间的顺序还是正序的。
 
-We include the current price when price grows.
+如果当前word内不存在有流动性的tick，我们将会在下一个循环中，在相邻的word中继续寻找。
 
-Now, let's look at the implementation:
+现在让我们来实现：
 ```solidity
 function nextInitializedTickWithinOneWord(
     mapping(int16 => uint256) storage self,
@@ -148,11 +138,10 @@ function nextInitializedTickWithinOneWord(
     ...
 ```
 
-1. First arguments makes this function a method of `mapping(int16 => uint256)`.
-1. `tick` is the current tick.
-1. `tickSpacing` is always 1 until we start using it in Milestone 3.
-1. `lte` is the flag that sets the direction. When `true`, we're selling token $X$ and searching for next initialized tick
-to the right of the current one. When `false,` it's the other way around.
+1. 第一个参数让这个函数成为`mapping(int16 => uint256)`的一个方法
+2. `tick`代表现在的`tick`
+3. `tickSpaceing`在本章节中一直为1
+4. `lte`是一个设置方向的flag。为true时，我们是卖出token $x$，在右边寻找下一个tick；false时相反。
 
 ```solidity
 if (lte) {
@@ -162,11 +151,10 @@ if (lte) {
     ...
 ```
 
-When selling $X$, we're:
-1. taking current tick's word and bit positions;
-1. making a mask where all bits to the right of the current bit position, including it, are ones (`mask` is all ones,
-its length = `bitPos`);
-1. applying the mask to the current tick's word.
+当卖出 $x$时，我们：
+1. 获得现在tick的对应位置
+2. 求出一个掩码，当前位及所有右边的位为1
+3. 将掩码覆盖到当前word上，得出右边的所有位
 
 ```solidity
     ...
@@ -176,9 +164,9 @@ its length = `bitPos`);
         : (compressed - int24(uint24(bitPos))) * tickSpacing;
     ...
 ```
-Next, `masked` won't equal 0 if at least one bit of it is set to 1. If so, there's an initialized tick; if not, there
-isn't (not in the current word). Depending on the result, we either return the index of the next initialized tick or the
-leftmost bit in the next word–this will allow to search for initialized ticks in the word during another loop cycle.
+
+接下来，`masked`不为0表示右边至少有一个tick对应的位为1。如果有这样的tick，那右边就有流动性；否则就没有（在当前word中）。根据结果，我们要么求出下一个有流动性的tick位置，或者下一个word的最左边一位——这让我们能够在下一个循环中搜索下一个word里面的有流动性的tick。
+
 
 ```solidity
     ...
@@ -189,13 +177,13 @@ leftmost bit in the next word–this will allow to search for initialized ticks 
     ...
 ```
 
-Similarly, when selling $Y$, we're:
-1. taking next tick's word and bit positions;
-1. making a different mask, where all bits to the left of next tick bit position are ones and all the bits to the right
-are zeros;
-1. applying the mask to the next tick's word.
+类似地，当卖出$y$时：
+1. 获取下一个tick的位置
+2. 求出一个不同的掩码，当前位置所有左边的位为1
+3. 应用这个掩码，获得左边的所有位
 
-Again, if there's no initialized ticks to the left, the rightmost bit of the previous word is returned:
+同样，如果当前word左边没有有流动性的tick，返回上一个word的最右边一位：
+
 ```solidity
     ...
     initialized = masked != 0;
@@ -206,8 +194,6 @@ Again, if there's no initialized ticks to the left, the rightmost bit of the pre
 }
 ```
 
-And that's it!
+这样就完成了！
 
-As you can see, `nextInitializedTickWithinOneWord` doesn't find the exact tick–it's scope of search is current or next
-tick's word. Indeed, we don't want to iterate over all the words since the we don't send boundaries on the bitmap index.
-This function, however, plays well with `swap` function–soon, we'll see this.
+正如你所见，`nextInitializedTickWithinOneWord` 并不一定真正找到了我们想要的tick——它的搜索范围仅仅包括当前word。事实上，我们并不希望在这个函数里循环遍历所有的word，因为我们并没有传入边界的参数。这个函数会在`swap`中运行地很好——我们马上就会看到。
