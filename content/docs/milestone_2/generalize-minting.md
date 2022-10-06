@@ -1,5 +1,5 @@
 ---
-title: "Generalize Minting"
+title: "通用mint"
 weight: 5
 # bookFlatSection: false
 # bookToc: true
@@ -11,18 +11,16 @@ weight: 5
 
 {{< katex display >}} {{</ katex >}}
 
-# Generalize Minting
+# 通用mint
 
-Now, we're ready to update `mint` function so we don't need to hard code values anymore and can calculate them instead.
+现在，我们可以更新`mint`函数来直接在Solidity中进行计算而不需要手动计算并硬编码了。
 
+## 初始化tick与更新
 
-## Indexing Initialized Ticks
+还记得在`mint`函数中，我们更新TickInfo这个mapping来存储tick中可用的流动性信息。现在，我们将会使用新的bitmap索引来进行这一步——我们之后会用这个新的索引来在交易中寻找下一个可用tick。
 
-Recall that, in the `mint` function, we update the TickInfo mapping to store information about available liquidity at ticks.
-Now, we also need to index newly initialized ticks in the bitmap index–we'll later use this index to find next initialized
-tick during swapping.
+首先，我们需要更新`Tick.update`函数：
 
-First, we need to update `Tick.update` function:
 ```solidity
 // src/lib/Tick.sol
 function update(
@@ -36,10 +34,10 @@ function update(
 }
 ```
 
-It now returns `flipped` flag, which is set to true when liquidity is added to an empty tick or when entire liquidity
-is removed from a tick.
+现在，它会返回一个`flipped` flag，当流动性被添加到一个空的tick或整个tick的流动性被耗尽时为true。
 
-Then, in `mint` function, we update the bitmap index:
+接下来，在`mint`函数中，我们更新bitmao索引：
+
 ```solidity
 // src/UniswapV3Pool.sol
 ...
@@ -56,23 +54,23 @@ if (flippedUpper) {
 ...
 ```
 
-> Again, we're setting tick spacing to 1 until we introduce different values in Milestone 4.
+> 再次说明，在Milestone 4之前，TickSpacing参数的值会始终为1.
 
-## Token Amounts Calculation
+## Token数量计算
 
-The biggest change in `mint` function is switching to tokens amount calculation. In Milestone 1, we hard coded these
-values:
+`mint`函数中最大的变化就是token数量的计算。在milestone 1中，我们硬编码了这些值：
+
 ```solidity
     amount0 = 0.998976618347425280 ether;
     amount1 = 5000 ether;
 ```
 
-And now we're going to calculate them in Solidity using formulas from Milestone 1. Let's recall those formulas:
+现在，我们将使用milestone 1中同样的公式，在Solidity中计算它。回顾一下这些公式：
 
 $$\Delta x = \frac{L(\sqrt{p(i_u)} - \sqrt{p(i_c)})}{\sqrt{p(i_u)}\sqrt{p(i_c)}}$$
 $$\Delta y = L(\sqrt{p(i_c)} - \sqrt{p(i_l)})$$
 
-$\Delta x$ is the amount of `token0`, or token $x$. Let's implement it in Solidity:
+$\Delta x$ 代表 `token0` 的数量, 即 token $x$。让我们在Solidity中进行实现：
 ```solidity
 // src/lib/Math.sol
 function calcAmount0Delta(
@@ -95,15 +93,12 @@ function calcAmount0Delta(
     );
 }
 ```
+> 这个函数的功能与Python脚本中的`calc_amount0`一致。
 
-> This function is identical to `calc_amount0` in our Python script.
+第一步是将两个价格排序来保证减法时不会溢出。接下来，我们将`liquidity`转换成Q96.64格式的数字，只需要乘以 2**96。下一步，根据公式，我们将其乘以价格之差并除以两个价格（先除以大的，再除以小的）。两个除法的顺序并不重要，但是我们的除法要分两步进行，因为分母的惩罚可能会导致溢出。
 
-First step is to sort the prices to ensure we don't underflow when subtracting. Next, we convert `liquidity` to a Q96.64
-number by multiplying it by 2**96. Next, according to the formula, we multiply it by the difference of the prices and
-divide it by the bigger price. Then, we divide by the smaller price. The order of division doesn't matter, but we want
-to have two divisions because multiplication of prices can overflow.
+我们使用了 `mulDivRoundingUp` 函数来在一步中进行乘除。这个函数是基于 `PRBMath` 库中的 `mulDiv`：
 
-We're using `mulDivRoundingUp` to multiply and divide in one operation. This function is based on `mulDiv` from `PRBMath`:
 ```solidity
 function mulDivRoundingUp(
     uint256 a,
@@ -118,10 +113,9 @@ function mulDivRoundingUp(
 }
 ```
 
-`mulmod` is a Solidity function that multiplies two numbers (`a` and `b`), divides the result by `denominator`, and 
-returns the remainder. If the remainder is positive, we round the result up.
+`mulmod` 是Solidity的一个函数，将两个数`a`和`b`相乘，乘积除以`denominator`，返回余数。如果余数为正，我们将结果上取整。
 
-Next, $\Delta y$:
+接下来是 $\Delta y$：
 ```solidity
 function calcAmount1Delta(
     uint160 sqrtPriceAX96,
@@ -138,12 +132,12 @@ function calcAmount1Delta(
     );
 }
 ```
+> 这个函数与Python脚本中的`calc_amount1`一致。
 
-> This function is identical to `calc_amount1` in our Python script.
+同样我们使用`mulDivRoundingUp`来防止乘法过程中的溢出。
 
-Again, we're using `mulDivRoundingUp` to avoid overflows during multiplication.
+现在它们都完成了！我们现在可以使用这些函数来计算token数量了：
 
-And that's it! We can now use the functions to calculate token amounts:
 ```solidity
 // src/UniswapV3Pool.sol
 function mint(...) {
@@ -165,5 +159,4 @@ function mint(...) {
 }
 ```
 
-Everything else remains the same. You'll need to update the amounts in the pool tests, they'll be slightly different
-due to rounding.
+其余的一切都保持不变。测试脚本中的数字需要更新，因为取整的缘故会与我们一开始手动计算的略有不同。
