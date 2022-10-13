@@ -1,5 +1,5 @@
 ---
-title: "UI"
+title: "用户界面"
 weight: 7
 # bookFlatSection: false
 # bookToc: true
@@ -11,7 +11,7 @@ weight: 7
 
 {{< katex display >}} {{</ katex >}}
 
-# UI
+# 用户界面
 
 现在，我们可以进行这个milestone的最后一步了——搭建一个UI！
 
