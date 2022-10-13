@@ -1,5 +1,5 @@
 ---
-title: "Generalize Swapping"
+title: "通用swap"
 weight: 6
 # bookFlatSection: false
 # bookToc: true
@@ -11,18 +11,13 @@ weight: 6
 
 {{< katex display >}} {{</ katex >}}
 
-# Generalize Swapping
+# 通用swap
 
-This will be the hardest chapter of this milestone. Before updating the code, we need to understand how the algorithm of
-swapping in Uniswap V3 works.
+本节将会是这个milestone中最难的一个部分。在更新代码之前，我们首先需要知道Uniswap V3中的swap是如何工作的。
 
-You can think of a swap as of filling of an order: a user submits an order to buy a specified amount of tokens from a pool.
-The pool will use the available liquidity to "convert" the input amount into an output amount of the other token. If there's
-not enough liquidity in the current price range, it'll try to find liquidity in other price ranges (using the function
-we implemented in the previous chapter).
+我们可以把一笔交易看作是满足一个订单：一个用户提交了一个订单，需要从池子中购买一定数量的某种token。池子会使用可用的流动性来将投入的token数量“转换”成输出的token数量。如果在当前价格区间中没有足够的流动性，它将会尝试在其他价格区间中寻找流动性（使用我们前一节实现的函数）。
 
-We're now going to implement this logic in the `swap` function, however going to stay only within the current price range
-for now–we'll implement cross-tick swaps in the next milestone.
+现在，我们要实现`swap`函数内部的逻辑，但仍然保证交易可以在当前价格区间内完成——跨tick的交易将会在下一个milestone中实现。
 
 ```solidity
 function swap(
@@ -34,18 +29,14 @@ function swap(
     ...
 ```
 
-In `swap` function, we add two new parameters: `zeroForOne` and `amountSpecified`. `zeroForOne` is the flag that controls
-swap direction: when `true`, `token0` is traded in for `token1`; when `false,` it's the opposite. For example, if `token0`
-is ETH and `token1` is USDC, setting `zeroForOne` to `true` means buying USDC for ETH. `amountSpecified` is the amount of
-tokens user wants to sell.
+在`swap`函数中，我们新增了两个参数：`zeroForOne` 和 `amountSpecified`。`zeroForOne` 是用来控制交易方向的 flag：当设置为true，是用 `token0` 兑换 `token1`；false则相反。例如，如果`token0` 是ETH，`token1` 是USDC，将 `zeroForOne` 设置为true意味着用 USDC 购买 ETH。`amountSpecified` 是用户希望卖出的token数量。
 
-## Filling Orders
+## 填满订单
 
-Since, in Uniswap V3, liquidity is stored in multiple price ranges, Pool contract needs to find all liquidity that's
-required to "fill an order" from user. This is done via iterating over initialized ticks in a direction chosen by
-user.
+由于在Uniswap V3中，流动性存储在不同的价格区间中，池子合约需要找到“填满当前订单”所需要的所有流动性。这个操作是通过沿着某个方向遍历所有初始化的tick来实现的。
 
-Before continuing, we need to define two new structures:
+在继续之前，我们需要定义两个新的结构体：
+
 ```solidity
 struct SwapState {
     uint256 amountSpecifiedRemaining;
@@ -62,17 +53,12 @@ struct StepState {
     uint256 amountOut;
 }
 ```
-`SwapState` maintains current swap's state. `amountSpecifiedRemaining` tracks the remaining amount of tokens that needs
-to be bought by the pool. When it's zero, the swap is done. `amountCalculated` is the out amount calculated by the contract.
-`sqrtPriceX96` and `tick` are new current price and tick after a swap is done.
 
-`StepState` maintains current swap step's state. This structure tracks the state of **one iteration** of an "order filling".
-`sqrtPriceStartX96` tracks the price the iteration begins with. `nextTick` is the next initialized tick that will provide
-liquidity for the swap and `sqrtPriceNextX96` is the price at the next tick. `amountIn` and `amountOut` are amounts that
-can be provided by the liquidity of the current iteration.
+`SwapState` 维护了当前swap的状态。`amoutSpecifiedRemaining` 跟踪了还需要从池子中获取的token数量：当这个数量为0时，这笔订单就被填满了。`amountCalculated` 是由合约计算出的输出数量。`sqrtPriceX96` 和 `tick` 是交易结束后的价格和`tick`。
 
-> After we implement cross-tick swaps (that is, swaps that happen across multiple price ranges), the idea of iterating
-will be clearer.
+`StepState` 维护了当前交易“一步”的状态。这个结构体跟踪“填满订单”过程中**一个循环**的状态。`sqrtPriceStartX96` 跟踪循环开始时的价格。`nextTick` 是能够为交易提供流动性的下一个已初始化的`tick`，`sqrtPriceNextX96` 是下一个`tick` 的价格。`amountIn` 和 `amountOut` 是当前循环中流动性能够提供的数量。
+
+> 在我们实现跨tick的交易后（也即不发生在一个价格区间中的交易），关于循环方面会有更清晰的了解
 
 ```solidity
 // src/UniswapV3Pool.sol
@@ -89,8 +75,7 @@ function swap(...) {
     ...
 ```
 
-Before filling an order, we initialize a `SwapState` instance. We'll loop until `amountSpecifiedRemaining` is 0, which
-will mean that the pool has enough liquidity to buy `amountSpecified` tokens from user.
+在填满一个订单之前，我们首先初始化 `SwapState` 的实例。我们将会循环直到 `amoutSpecified` 变成0，也即池子拥有足够的流动性来买用户的 `amountSpecified` 数量的token。
 
 ```solidity
 ...
@@ -108,9 +93,7 @@ while (state.amountSpecifiedRemaining > 0) {
     step.sqrtPriceNextX96 = TickMath.getSqrtRatioAtTick(step.nextTick);
 ```
 
-In the loop, we set up a price range that should provide liquidity for the swap. The range is from `state.sqrtPriceX96`
-to `step.sqrtPriceNextX96`, where the latter is the price at the next initialized tick (as returned by
-`nextInitializedTickWithinOneWord`–we know this function from a previous chapter).
+在循环中，我们设置一个价格区间为这笔交易提供流动性的价格区间。这个区间是从 `state.sqrtPriceX96` 到 `step.sqrtPriceNextX96`，后者是下一个初始化的tick对应的价格（从上一章实现的`nextInitializedTickWithinOneWord` 中获取）。
 
 ```solidity
 (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath
