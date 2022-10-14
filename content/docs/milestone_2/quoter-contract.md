@@ -1,5 +1,5 @@
 ---
-title: "Quoter Contract"
+title: "报价合约"
 weight: 7
 # bookFlatSection: false
 # bookToc: true
@@ -9,18 +9,13 @@ weight: 7
 # bookSearchExclude: false
 ---
 
-# Quoter Contract
+# 报价合约
 
-To integrate our updated Pool contract into the front end app, we need a way to calculate swap amounts without making
-a swap. Users will type in the amount they want to sell, and we want to calculate and show them the amount they'll get
-in exchange. We'll do this through Quoter contract.
+为了让我们的池子合约能够集成到前端，我们需要一种方式能够在交易之前就计算出对应的数量。用户会输入它们希望卖出的token数量，然后就能计算并且展示出它们会获得的token数量。我们将通过报价合约来实现这一功能。
 
-Since liquidity in Uniswap V3 is scattered over multiple price ranges, we cannot calculate swap amounts with a formula
-(which was possible in Uniswap V2). The design of Uniswap V3 forces us to use a different approach: to calculate swap
-amounts, we'll initiate a real swap and will interrupt it in the callback function, grabbing the amounts calculated
-by Pool contract. That is, we have to simulate a real swap to calculate output amount!
+由于Uniswap V3中的流动性是分散在多个价格区间中的，我们不能够仅仅通过一个公式计算出对应数量（像在Uniswap V2中那样）。Uniswap V3的设计需要我们用一种不同的方法：为了获得交易数量，我们初始化一个真正的交易，并且在callback函数中打断它，获取到之前计算出的对应数量。也就是，我们将会模拟一笔真实的交易来计算输出数量！
 
-Again, we'll make a helper contract for that:
+我们会创建这样一个辅助合约：
 
 ```solidity
 contract UniswapV3Quoter {
@@ -41,9 +36,7 @@ contract UniswapV3Quoter {
         ...
 ```
 
-Quoter is a contract that implements only one public function–`quote`. Quoter is a universal contract that works with
-any pool so it takes pool address as a parameter. The other parameters (`amountIn` and `zeroForOne`) are required to
-simulate a swap.
+Quoter 合约仅实现了一个public的函数——`quote`。Quoter是一个对于所有池子的通用合约，因此它将池子地址作为一个参数。其他参数（`amountIn` 和 `zeroForOne`）都是模拟swap需要的参数。
 
 ```solidity
 try
@@ -57,10 +50,9 @@ try
     return abi.decode(reason, (uint256, uint160, int24));
 }
 ```
-The only thing that the contract does is calling `swap` function of a pool. The call is expected to revert (i.e. throw
-an error)–we'll do this in the swap callback. In the case of a revert, revert reason is decoded and returned; `quote` will
-never revert. Notice that, in the extra data, we're passing only pool address–in the swap callback, we'll use it to get
-pool's `slot0` after a swap.
+
+这个函数唯一实现的功能是调用池子合约的 `swap` 函数。这个调用应当revert（即抛出异常）——我们将会在callback中实现这一点。当revert发生的时候，对应的reason会解码并且返回。`quote`永远不会revert。注意到，在data字段，我们仅仅传入和合约的地址——因为在callback函数中，我们需要用它来获取对应池子的`slot0`。
+
 
 ```solidity
 function uniswapV3SwapCallback(
@@ -78,8 +70,7 @@ function uniswapV3SwapCallback(
         .slot0();
 ```
 
-In the swap callback, we're collecting values that we need: output amount, new price, and corresponding tick. Next, we
-need to save these values and revert:
+在swap的callback中，我们收集我们想要的值：输出数量，新的价格以及对应的tick。接下来，我们将会把这些值保存下来并且revert：
 
 ```solidity
 assembly {
@@ -90,44 +81,32 @@ assembly {
     revert(ptr, 96)
 }
 ```
+为了节约gas，这部分使用[Yul](https://docs.soliditylang.org/en/latest/assembly.html)来实现，这是一个在Solidity内部写内联汇编的语言。让我们来逐句分析一下：
 
-For gas optimization, this piece is implemented in [Yul](https://docs.soliditylang.org/en/latest/assembly.html), the
-language used for inline assembly in Solidity. Let's break it down:
-1. `mload(0x40)` reads the pointer of the next available memory slot (memory in EVM is organized in 32 byte slots);
-1. at that memory slot, `mstore(ptr, amountOut)` writes `amountOut`;
-1. `mstore(add(ptr, 0x20), sqrtPriceX96After)` writes `sqrtPriceX96After` right after `amountOut`;
-1. `mstore(add(ptr, 0x40), tickAfter)` writes `tickAfter` after `sqrtPriceX96After`;
-1. `revert(ptr, 96)` reverts the call and returns 96 bytes (total length of the values we wrote to memory) of data at
-address `ptr` (start of the data we wrote above).
+1. `mload(0x40)` 读取下一个可用memory slot的指针（EVM中的memory组织成32字节的slot形式）；
+2. 在这个memory slot，`mstore(ptr, amountOut)` 写入 `amountOut` 。
+3. `mstore(add(ptr, 0x20), sqrtPriceX96After)` 在 `amountOut` 后面写入 `sqrtPriceX96After`。
+4. `mstore(add(ptr, 0x40), tickAfter)` 在 `sqrtPriceX96After` 后面写入 `tickAfter`。
+5. `revert(ptr, 96)` 会revert这个调用，并且返回ptr指向位置的96字节数据。
 
-So, we're basically concatenating the bytes representations of the values we need (exactly what `abi.encode()` does).
-Notice that the offsets are always 32 bytes, even though `sqrtPriceX96After` takes 20 bytes (`uint160`) and `tickAfter`
-takes 3 bytes (`int24`). This is so we could use `abi.decode()` to decode the data: its counterpart, `abi.encode()`,
-encodes all integers as 32-byte words.
+所以，我们实际上就是把我们需要的值的字节表示连接起来（也就是`abi.encode()`做的事）。注意到偏移永远是32字节，即使 `sqrtPriceX96After` 大小只有20字节(`uint160`)，`tickAfter` 大小只有3字节(`uint24`)。这也是为什么我们能够使用 `abi.decode()` 来解码数据：因为 `abi.encode()` 就是把所有的数编码成32字节。
 
-Aaaand, done.
+这样就完成了~
 
-## Recap
+## 回顾
 
-Let's recap to better understand the algorithm:
-1. `quote` calls `swap` of a pool with input amount and swap direction;
-1. `swap` performs a real swap, it runs the loop to fill the input amount specified by user;
-1. to get tokens from user, `swap` calls the swap callback on the caller;
-1. the caller (Quote contract) implements the callback, in which it reverts with output amount, new price, and new tick;
-1. the revert bubbles up to the initial `quote` call;
-1. in `quote`, the revert is caught, revert reason is decoded and returned as the result of calling `quote`.
+我们来回顾一下以便于更好地理解这个算法：
+1. `quote` 调用一个池子的 `swap` 函数，参数是输入的token数量和交易方向。
+2. `swap` 进行一个真正的交易，运行一个循环来填满用户需要的数量。
+3. 为了从用户那里获得token，`swap` 会调用caller 的 callback 函数。
+4. 调用者（报价合约）实现了callback，在其中它 revert 并且附带了输出数量、新的价格、新的tick这些信息。
+5. revert 一直向上传播到最初的 `quote` 调用
+6. 在 `quote` 中，这个 revert 被捕获，reason 被解码并作为了 `quote` 调用的返回值。
 
-I hope this is clear!
+希望上面的解释能让你对这个流程更加清晰！
 
-## Quoter Limitation
+## Quoter的限制
 
-This design has one significant limitation: since `quote` calls `swap` function of Pool contract, and `swap` function is
-not a pure or view function (because it modifies contract state), `quote` cannot also be pure or view. `swap` modifies
-state and so does `quote`, even if not in Quoter contract. But we treat `quote` as a getter, a function that only reads
-contract data. This inconsistency means that EVM will use [CALL](https://www.evm.codes/#f1) opcode instead of [CALLSTATIC](https://www.evm.codes/#fa)
-when `quote` is called. This is not a big problem since Quoter reverts in the swap callback, and reverting resets the state
-modified during a call–this guarantees that `quote` won't modify the state of Pool contract (no actual trade will happen).
+这样的设计有一个非常明显的限制之处：由于 `quote` 调用了池子合约的 `swap` 函数，而 `swap` 函数既不是 pure 的也不是 view 的（因为它修改了合约状态），`quoter` 也同样不能成为一个 pure 或者 view 的函数，即使它永远都不会修改合约的状态。但是，我们却能够把 `quote` 作为一个 `getter` 函数来使用，仅仅读取合约的数据而没有写。这样的不同之处意味着，EVM会使用 [CALL](https://www.evm.codes/#f1) opcode 而不是 [CALLSTATIC](https://www.evm.codes/#fa)。这不算是一个太大的问题，因为 Quoter 总会 revert，并且revert会重置调用中修改的一切合约状态——这保证了 `quote` 并不会修改池子合约的任何状态（也即没有实际的交易发生）。
 
-Another inconvenience that comes from this issue is that calling `quote` from a client library (Ethers.js, Web3.js, etc.)
-will trigger a transaction. To fix this, we'll need to force the library to make a static call. We'll see how to do this
-in Ethers.js later in this milestone.
+另一个有些不同的点在于，当我们使用某个库调用 `quote` 函数时通常会触发一个交易。为了解决这个问题，我们需要强制这个库使用 static call。我们将会在下一小节中看到我们如何在 Ethers.js 中实现这一点。

@@ -79,10 +79,10 @@ https://uniswapv3book.com/
    1. [x] introduction
    2. [x] output-amount-calculation
    3. [x] math-in-solidity
-   4. [ ] tick-bitmap-index
-   5. [ ] generalize-minting
-   6. [ ] generalize-swapping
-   7. [ ] quoter-contract
+   4. [x] tick-bitmap-index
+   5. [x] generalize-minting
+   6. [x] generalize-swapping
+   7. [x] quoter-contract
    8. [ ] user-interface
 5. [ ] milestone_3
 6. [ ] milestone_4
