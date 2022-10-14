@@ -105,8 +105,7 @@ while (state.amountSpecifiedRemaining > 0) {
     );
 ```
 
-Next, we're calculating the amounts that can be provider by the current price range, and the new current price the swap
-will result in.
+接下来，我们计算当前价格区间能够提供的流动性的数量，以及交易达到的目标价格。
 
 ```solidity
     state.amountSpecifiedRemaining -= step.amountIn;
@@ -115,13 +114,11 @@ will result in.
 }
 ```
 
-Final steps in the loop is updating the SwapState. `step.amountIn` is the amount of tokens the price range can buy
-from user; `step.amountOut` is the related number of the other token the pool can sell to user. `state.sqrtPriceX96` is
-the current price that will be set after the swap (recall that trading changes current price).
+循环中的最后一步就是更新SwapState。`step.amountIn` 是这个价格区间可以从用户手中买走的token数量了；`step.amountOut` 是相应的池子卖给用户的数量。`state.sqrtPriceX96` 是交易结束后的现价（因为交易会改变价格）。
 
-## SwapMath Contract
+## SwapMath 合约
 
-Let's look closer at `SwapMath.computeSwapStep`.
+接下来，让我们更深入研究一下 `SwapMath.computeSwapStep`：
 
 ```solidity
 // src/lib/SwapMath.sol
@@ -142,9 +139,7 @@ function computeSwapStep(
     ...
 ```
 
-This is the core logic of swapping. The function calculates swap amounts within one price range and respecting available
-liquidity. It'll return: the new current price and input and output token amounts. Even though the input amount is provided
-by user, we still calculate it to know how much of the user specified input amount was processed by one call to `computeSwapStep`.
+这是整个swap的核心逻辑所在。这个函数计算了一个价格区间内部的交易数量以及对应的流动性。它的返回值是：新的现价、输入token数量、输出token数量。尽管输入token数量是由用户提供的，我们仍然需要进行计算在对于 `computeSwapStep` 的一次调用中可以处理多少用户提供的token。
 
 ```solidity
 bool zeroForOne = sqrtPriceCurrentX96 >= sqrtPriceTargetX96;
@@ -156,12 +151,10 @@ sqrtPriceNextX96 = Math.getNextSqrtPriceFromInput(
     zeroForOne
 );
 ```
+通过检查价格大小我们来确认交易的方向。知道交易方向后，我们就可以计算交易`amountRemaining`数量token之后的价格。在下面我们还会回过头来看这个函数。
 
-By checking the price, we can determine the direction of the swap. Knowing the direction, we can calculate the price after
-swapping `amountRemaining` of tokens. We'll return to this function below.
+找到新的价格后，我们根据之前已有的函数能够计算出输入和输出的数量（与`mint`里面用到的，根据流动性计算token数量的函数相同）：
 
-After finding the new price, we can calculate input and output amounts of the swap using the function we already have (
-the same functions we used to calculate token amounts from liquidity in the `mint` function):
 ```solidity
 amountIn = Math.calcAmount0Delta(
     sqrtPriceCurrentX96,
@@ -182,15 +175,14 @@ if (!zeroForOne) {
 }
 ```
 
-That's it for `computeSwapStep`!
+这就是 `computeSwapStep`的全部！
 
-## Finding Price by Swap Amount
+## 通过交易数量获取价格
 
-Let's now look at `Math.getNextSqrtPriceFromInput`–the function calculates a $\sqrt{P}$ given another $\sqrt{P}$,
-liquidity, and input amount. It tells what the price will be after swapping the specified input amount of tokens, given
-the current price and liquidity.
+接下来我们来看 `Math.getNextSqrtPriceFromInput` 函数——这个函数根据现在的 $\sqrt{P}$、流动性、和输入数量，计算出交易后新的 $\sqrt{P}$。
 
-Good news is that we already know the formulas: recall how we calculated `price_next` in Python:
+一个好消息是我们已经知道了相关的公式。回忆一下，我们之前在 Python 中计算 `price_next`
+
 ```python
 # When amount_in is token0
 price_next = int((liq * q96 * sqrtp_cur) // (liq * q96 + amount_in * sqrtp_cur))
@@ -198,7 +190,7 @@ price_next = int((liq * q96 * sqrtp_cur) // (liq * q96 + amount_in * sqrtp_cur))
 price_next = sqrtp_cur + (amount_in * q96) // liq
 ```
 
-We're going to implement this in Solidity:
+我们会在Solidity中实现上述功能：
 ```solidity
 // src/lib/Math.sol
 function getNextSqrtPriceFromInput(
@@ -220,9 +212,7 @@ function getNextSqrtPriceFromInput(
         );
 }
 ```
-
-The function handles swapping in both directions. Since calculations are different, we'll implement them in separate 
-functions.
+这个函数仅仅是分别处理了两个方向的功能。我们会分别在两个不同的函数中进行实现：
 
 ```solidity
 function getNextSqrtPriceFromAmount0RoundingUp(
@@ -249,18 +239,18 @@ function getNextSqrtPriceFromAmount0RoundingUp(
         );
 }
 ```
-In this function, we're implementing two formulas. At the first `return`, it implements the same formula we implemented
-in Python. This is the most precise formula, but it can overflow when multiplying `amountIn` by `sqrtPriceX96`. The
-formula is (we discussed it in "Output Amount Calculation"):
+
+在这个函数中，我们实现了两个公式。在第一个`return` 那里，实现了我们Python中提到的公式。这事最精确的公式，凡是它可能会在 `amountIn` 与 `sqrtPriceX96` 相乘时产生溢出。公式是：
+
 $$\sqrt{P_{target}} = \frac{\sqrt{P}L}{\Delta x \sqrt{P} + L}$$
 
-When it overflows, we use an alternative formula, which is less precise:
+当它可能产生溢出时，我们使用另一个替代的公式，精确度会更低但是不会溢出：
+
 $$\sqrt{P_{target}} = \frac{L}{\Delta x + \frac{L}{\sqrt{P}}}$$
 
-Which is simply the previous formula with the numerator and the denominator divided by $\sqrt{P}$ to get rid of the multiplication
-in the numerator.
+其实也仅仅是把第一个公式上下同时除以$\sqrt{P}$得到的。
 
-The other function has simpler math:
+另一个函数的实现会简单一些：
 ```solidity
 function getNextSqrtPriceFromAmount1RoundingDown(
     uint160 sqrtPriceX96,
@@ -273,23 +263,19 @@ function getNextSqrtPriceFromAmount1RoundingDown(
 }
 ```
 
-## Finishing the Swap
+## 完成swap
 
-Now, let's return to the `swap` function and finish it.
+现在，让我们回到`swap`函数并且完成它。
 
-By this moment, we have looped over next initialized ticks, filled `amountSpecified` specified by user, calculated input
-and amount amounts, and found new price and tick. Since, in this milestone, we're implementing only swaps within one price
-range, this is enough. We now need to update contract's state, send tokens to user, and get
-tokens in exchange.
-
+到目前为止，我们已经能够沿着下一个初始化过的tick进行循环、填满用户指定的`amoutSpecified`、计算输入和输出数量，并且找到新的价格和tick。由于在本章节中我们只实现在一个价格区间内的交易，这些功能就已经足够了。我们现在只需要去更新合约状态、将token发送给用户，并从用户处获得token。
 
 ```solidity
 if (state.tick != slot0_.tick) {
     (slot0.sqrtPriceX96, slot0.tick) = (state.sqrtPriceX96, state.tick);
 }
 ```
-First, we set new price and tick. Since this operation writes to contract's storage, we want to do it only if the new
-tick is different, to optimize gas consumption.
+
+首先，我们设置新的价格和tick。由于这个操作需要对合约的存储进行写操作，我们仅仅会在新的tick不同的时候进行更新，来节省gas。
 
 ```solidity
 (amount0, amount1) = zeroForOne
@@ -302,8 +288,8 @@ tick is different, to optimize gas consumption.
         int256(amountSpecified - state.amountSpecifiedRemaining)
     );
 ```
+接下来，我们根据交易的方向来获得循环中计算出的对应数量。
 
-Next, we calculate swap amounts based on swap direction and the amounts calculated during the swap loop.
 
 ```solidity
 if (zeroForOne) {
@@ -331,16 +317,12 @@ if (zeroForOne) {
 }
 ```
 
-Next, we're exchanging tokens with user, depending on swap direction. This piece is identical to what we had in Milestone 2,
-only handling of the other swap direction was added.
+接下来，我们根据交易方向与用户交换token。这个部分和我们在milestone 1中实现的部分一样，除了要考虑交易方向之外。
 
-That's it! Swapping is done!
+现在Swap已经完成了！
 
-## Testing
+## 测试
 
-Test won't change significantly, we only need to pass `amountSpecified` and `zeroForOne` to `swap` function. Output amount
-will change insignificantly though, because it's now calculated in Solidity.
+测试的改变并不大，我们仅仅需要把`amoutSpecified` 和 `zeroForOne` 传参给`swap`函数。输出的数量会略微有不同，因为这里是用Solidity计算的。
 
-We can now test swapping in the opposite direction! I'll leave this for you, as a homework (just be sure to choose a
-small input amount so the whole swap can be handled by our single price range). Don't hesitate peeking at [my tests](https://github.com/Jeiwan/uniswapv3-code/blob/milestone_2/test/UniswapV3Pool.t.sol)
-if this feels difficult!
+我们现在也可以测试相反方向的交易了！此测试留作作业给读者完成（记得选择一个较小的金额，来确保交易发生在同一个价格区间）。如果遇到困难，可以参考[作者的测试](https://github.com/Jeiwan/uniswapv3-code/blob/milestone_2/test/UniswapV3Pool.t.sol)。
