@@ -75,7 +75,7 @@ https://uniswapv3book.com/
    5. [x] manager-contract
    6. [x] deployment
    7. [x] user-interface 
-4. [ ] milestone_2
+4. [x] milestone_2
    1. [x] introduction
    2. [x] output-amount-calculation
    3. [x] math-in-solidity
