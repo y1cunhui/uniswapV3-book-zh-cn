@@ -83,7 +83,7 @@ https://uniswapv3book.com/
    5. [x] generalize-minting
    6. [x] generalize-swapping
    7. [x] quoter-contract
-   8. [ ] user-interface
+   8. [x] user-interface
 5. [ ] milestone_3
 6. [ ] milestone_4
 7. [ ] milestone_5
