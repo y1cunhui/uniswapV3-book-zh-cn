@@ -86,7 +86,7 @@ https://uniswapv3book.com/
    8. [x] user-interface
 5. [ ] milestone_3
    1. [x] introduction
-   2. [ ] different-price-ranges
+   2. [x] different-price-ranges
    3. [ ] cross-tick swaps
    4. [ ] slippage protection
    5. [ ] liquidity protection
