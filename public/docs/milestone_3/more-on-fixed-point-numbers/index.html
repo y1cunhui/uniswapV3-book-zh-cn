@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="\[ \] A Little Bit More on Fixed-point Numbers # In this bonus chapter, I&rsquo;d like to show you how to convert prices to ticks in Solidity. We don&rsquo;t need to do this in the main contracts, but it&rsquo;s helpful to have such function in tests so we don&rsquo;t hardcode ticks and could write something like tick(5000)–this makes code easier to read because it&rsquo;s more convenient for us to think in prices, not tick indexes.">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="A Little Bit More on Fixed-point Numbers" />
+<meta property="og:description" content="\[ \] A Little Bit More on Fixed-point Numbers # In this bonus chapter, I&rsquo;d like to show you how to convert prices to ticks in Solidity. We don&rsquo;t need to do this in the main contracts, but it&rsquo;s helpful to have such function in tests so we don&rsquo;t hardcode ticks and could write something like tick(5000)–this makes code easier to read because it&rsquo;s more convenient for us to think in prices, not tick indexes." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" /><meta property="article:section" content="docs" />
+
+
+
+<title>A Little Bit More on Fixed-point Numbers | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="active">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>A Little Bit More on Fixed-point Numbers</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#a-little-bit-more-on-fixed-point-numbers">A Little Bit More on Fixed-point Numbers</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown">
+<link rel="stylesheet" href="https://uniswapv3book.com/katex/katex.min.css" />
+<script>
+  function renderKatex(element) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      
+      throwOnError: false
+    });
+  }
+</script>
+<script defer src="https://uniswapv3book.com/katex/katex.min.js"></script>
+<script defer src="https://uniswapv3book.com/katex/auto-render.min.js" onload="renderKatex(document.body)"></script><span>
+  \[ \]
+</span>
+<h1 id="a-little-bit-more-on-fixed-point-numbers">
+  A Little Bit More on Fixed-point Numbers
+  <a class="anchor" href="#a-little-bit-more-on-fixed-point-numbers">#</a>
+</h1>
+<p>In this bonus chapter, I&rsquo;d like to show you how to convert prices to ticks in Solidity. We don&rsquo;t need to do this in the
+main contracts, but it&rsquo;s helpful to have such function in tests so we don&rsquo;t hardcode ticks and could write something like
+<code>tick(5000)</code>–this makes code easier to read because it&rsquo;s more convenient for us to think in prices, not tick indexes.</p>
+<p>Recall that, to find ticks, we use <code>TickMath.getTickAtSqrtRatio</code> function, which takes $\sqrt{P}$ as its argument, and
+the $\sqrt{P}$ is a Q64.96 fixed-point number. In smart contract tests, we need to check $\sqrt{P}$ many times
+in many different test cases: mostly after mints and swaps. Instead of hard coding actual values, it might be cleaner to
+use a helper function like <code>sqrtP(5000)</code> that converts prices to $\sqrt{P}$.</p>
+<p>So, what&rsquo;s the problem?</p>
+<p>The problem is that Solidity doesn&rsquo;t natively support the square root operation, which means we need a third-party
+library. Another problem is that prices are often relatively small numbers, like 10, 5000, 0.01, etc., and we don&rsquo;t want
+to lose precision when taking square root.</p>
+<p>You probably remember that we used <code>PRBMath</code> earlier in the book to implement multiply-then-divide operation that doesn&rsquo;t
+overflow during multiplication. If you check <code>PRBMath.sol</code> contract, you&rsquo;ll notice <code>sqrt</code> function. However, the function
+doesn&rsquo;t support fixed-point numbers, as the function description says. You can give it a try and see that
+<code>PRBMath.sqrt(5000)</code> results in <code>70</code>, which is an integer number with lost precision (without the fractional part).</p>
+<p>If you check <a href="https://github.com/paulrberg/prb-math">prb-math</a> repo, you&rsquo;ll see these contracts: <code>PRBMathSD59x18.sol</code>
+and <code>PRBMathUD60x18.sol</code>. Aha! These are fixed-point number implementations. Let&rsquo;s pick the latter and see how it goes:
+<code>PRBMathUD60x18.sqrt(5000 * PRBMathUD60x18.SCALE)</code> returns <code>70710678118654752440</code>. This looks interesting!
+<code>PRBMathUD60x18</code> is a library that implements fixed-numbers with 18 decimal places in the fractional part. So the number
+we got is actually 70.710678118654752440 (use <code>cast --from-wei 70710678118654752440</code>).</p>
+<p>However, we cannot use this number!</p>
+<p>There are fixed-point numbers and fixed-point numbers. The Q64.96 fixed-point number used by Uniswap V3 is a <strong>binary</strong>
+number–64 and 96 signify <em>binary places</em>. But <code>PRBMathUD60x18</code> implements a <em>decimal</em> fixed-point number (UD in the
+contract name means &ldquo;unsigned, decimal&rdquo;), where 60 and 18 signify <em>decimal places</em>. This difference is quite significant.</p>
+<p>Let&rsquo;s see how to convert an arbitrary number (42) to either of the above fixed-point numbers:</p>
+<ol>
+<li>Q64.96: $42 * 2^{96}$ or, using bitwise left shift, <code>2 &lt;&lt; 96</code>. The result is 3327582825599102178928845914112.</li>
+<li>UD60.18: $42 * 10^{18}$. The result is 42000000000000000000.</li>
+</ol>
+<p>Let&rsquo;s now see how to convert numbers with the fractional part (42.1337):</p>
+<ol>
+<li>Q64.96: $421337 * 2^{92}$ or <code>421337 &lt;&lt; 92</code>. The result is 2086359769329537075540689212669952.</li>
+<li>UD60.18: $421337 * 10^{14}$. The result is 42133700000000000000.</li>
+</ol>
+<p>The second variant makes more sense to us because it uses the decimal system, which we learned in our childhood. The
+first variant uses the binary system and it&rsquo;s much harder for us to read.</p>
+<p>But the biggest problem with different variants is that it&rsquo;s hard to convert between them.</p>
+<p>This all means that we need a different library, one that implements a binary fixed-point number and <code>sqrt</code> function for
+it. Luckily, there&rsquo;s such library: <a href="https://github.com/abdk-consulting/abdk-libraries-solidity">abdk-libraries-solidity</a>.
+The library implemented Q64.64, not exactly what we need (not 96 bits in the fractional part) but this is not a problem.</p>
+<p>Here&rsquo;s how we can implement the price-to-tick function using the new library:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">tick</span>(<span style="color:#66d9ef">uint256</span> price) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">int24</span> tick_) {
+</span></span><span style="display:flex;"><span>    tick_ <span style="color:#f92672">=</span> TickMath.getTickAtSqrtRatio(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint160</span>(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int160</span>(
+</span></span><span style="display:flex;"><span>                ABDKMath64x64.sqrt(<span style="color:#66d9ef">int128</span>(<span style="color:#66d9ef">int256</span>(price <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">64</span>))) <span style="color:#f92672">&lt;&lt;</span>
+</span></span><span style="display:flex;"><span>                    (FixedPoint96.RESOLUTION <span style="color:#f92672">-</span> <span style="color:#ae81ff">64</span>)
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>ABDKMath64x64.sqrt</code> takes Q64.64 numbers so we need to convert <code>price</code> to such number. The price is expected to not have the
+fractional part, so we&rsquo;re shifting it by 64 bits. The <code>sqrt</code> function also returns a Q64.64 number but <code>TickMath.getTickAtSqrtRatio</code>
+takes a Q64.96 number–this is why we need to shift the result of the square root operation by <code>96 - 64</code> bits to the left.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#a-little-bit-more-on-fixed-point-numbers">A Little Bit More on Fixed-point Numbers</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

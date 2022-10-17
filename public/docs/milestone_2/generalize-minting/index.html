@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="\[ \] 通用mint # 现在，我们可以更新mint函数来直接在Solidity中进行计算而不需要手动计算并硬编码了。
+初始化tick与更新 # 还记得在mint函数中，我们更新TickInfo这个mapping来存储tick中可用的流动性信息。现在，我们将会使用新的bitmap索引来进行这一步——我们之后会用这个新的索引来在交易中寻找下一个可用tick。
+首先，我们需要更新Tick.update函数：
+// src/lib/Tick.sol function update( mapping(int24 =&gt; Tick.Info) storage self, int24 tick, uint128 liquidityDelta ) internal returns (bool flipped) { ... flipped = (liquidityAfter == 0) != (liquidityBefore == 0); ... } 现在，它会返回一个flipped flag，当流动性被添加到一个空的tick或整个tick的流动性被耗尽时为true。
+接下来，在mint函数中，我们更新bitmao索引：
+// src/UniswapV3Pool.sol ... bool flippedLower = ticks.update(lowerTick, amount); bool flippedUpper = ticks.update(upperTick, amount); if (flippedLower) { tickBitmap.flipTick(lowerTick, 1); } if (flippedUpper) { tickBitmap.flipTick(upperTick, 1); } ... 再次说明，在Milestone 4之前，TickSpacing参数的值会始终为1.">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="通用mint" />
+<meta property="og:description" content="\[ \] 通用mint # 现在，我们可以更新mint函数来直接在Solidity中进行计算而不需要手动计算并硬编码了。
+初始化tick与更新 # 还记得在mint函数中，我们更新TickInfo这个mapping来存储tick中可用的流动性信息。现在，我们将会使用新的bitmap索引来进行这一步——我们之后会用这个新的索引来在交易中寻找下一个可用tick。
+首先，我们需要更新Tick.update函数：
+// src/lib/Tick.sol function update( mapping(int24 =&gt; Tick.Info) storage self, int24 tick, uint128 liquidityDelta ) internal returns (bool flipped) { ... flipped = (liquidityAfter == 0) != (liquidityBefore == 0); ... } 现在，它会返回一个flipped flag，当流动性被添加到一个空的tick或整个tick的流动性被耗尽时为true。
+接下来，在mint函数中，我们更新bitmao索引：
+// src/UniswapV3Pool.sol ... bool flippedLower = ticks.update(lowerTick, amount); bool flippedUpper = ticks.update(upperTick, amount); if (flippedLower) { tickBitmap.flipTick(lowerTick, 1); } if (flippedUpper) { tickBitmap.flipTick(upperTick, 1); } ... 再次说明，在Milestone 4之前，TickSpacing参数的值会始终为1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" /><meta property="article:section" content="docs" />
+
+
+
+<title>通用mint | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="active">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>通用mint</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#通用mint">通用mint</a>
+      <ul>
+        <li><a href="#初始化tick与更新">初始化tick与更新</a></li>
+        <li><a href="#token数量计算">Token数量计算</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown">
+<link rel="stylesheet" href="https://uniswapv3book.com/katex/katex.min.css" />
+<script>
+  function renderKatex(element) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      
+      throwOnError: false
+    });
+  }
+</script>
+<script defer src="https://uniswapv3book.com/katex/katex.min.js"></script>
+<script defer src="https://uniswapv3book.com/katex/auto-render.min.js" onload="renderKatex(document.body)"></script><span>
+  \[ \]
+</span>
+<h1 id="通用mint">
+  通用mint
+  <a class="anchor" href="#%e9%80%9a%e7%94%a8mint">#</a>
+</h1>
+<p>现在，我们可以更新<code>mint</code>函数来直接在Solidity中进行计算而不需要手动计算并硬编码了。</p>
+<h2 id="初始化tick与更新">
+  初始化tick与更新
+  <a class="anchor" href="#%e5%88%9d%e5%a7%8b%e5%8c%96tick%e4%b8%8e%e6%9b%b4%e6%96%b0">#</a>
+</h2>
+<p>还记得在<code>mint</code>函数中，我们更新TickInfo这个mapping来存储tick中可用的流动性信息。现在，我们将会使用新的bitmap索引来进行这一步——我们之后会用这个新的索引来在交易中寻找下一个可用tick。</p>
+<p>首先，我们需要更新<code>Tick.update</code>函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// src/lib/Tick.sol
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">update</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">mapping</span>(<span style="color:#66d9ef">int24</span> <span style="color:#f92672">=&gt;</span> Tick.Info) <span style="color:#66d9ef">storage</span> self,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int24</span> tick,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint128</span> liquidityDelta
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">bool</span> flipped) {
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>    flipped <span style="color:#f92672">=</span> (liquidityAfter <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) <span style="color:#f92672">!=</span> (liquidityBefore <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>现在，它会返回一个<code>flipped</code> flag，当流动性被添加到一个空的tick或整个tick的流动性被耗尽时为true。</p>
+<p>接下来，在<code>mint</code>函数中，我们更新bitmao索引：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// src/UniswapV3Pool.sol
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>...
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> flippedLower <span style="color:#f92672">=</span> ticks.update(lowerTick, amount);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> flippedUpper <span style="color:#f92672">=</span> ticks.update(upperTick, amount);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (flippedLower) {
+</span></span><span style="display:flex;"><span>    tickBitmap.flipTick(lowerTick, <span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (flippedUpper) {
+</span></span><span style="display:flex;"><span>    tickBitmap.flipTick(upperTick, <span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><blockquote>
+<p>再次说明，在Milestone 4之前，TickSpacing参数的值会始终为1.</p>
+</blockquote>
+<h2 id="token数量计算">
+  Token数量计算
+  <a class="anchor" href="#token%e6%95%b0%e9%87%8f%e8%ae%a1%e7%ae%97">#</a>
+</h2>
+<p><code>mint</code>函数中最大的变化就是token数量的计算。在milestone 1中，我们硬编码了这些值：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>    amount0 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">998976618347425280</span> <span style="color:#66d9ef">ether</span>;
+</span></span><span style="display:flex;"><span>    amount1 <span style="color:#f92672">=</span> <span style="color:#ae81ff">5000</span> <span style="color:#66d9ef">ether</span>;
+</span></span></code></pre></div><p>现在，我们将使用milestone 1中同样的公式，在Solidity中计算它。回顾一下这些公式：</p>
+<p>$$\Delta x = \frac{L(\sqrt{p(i_u)} - \sqrt{p(i_c)})}{\sqrt{p(i_u)}\sqrt{p(i_c)}}$$
+$$\Delta y = L(\sqrt{p(i_c)} - \sqrt{p(i_l)})$$</p>
+<p>$\Delta x$ 代表 <code>token0</code> 的数量, 即 token $x$。让我们在Solidity中进行实现：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// src/lib/Math.sol
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">calcAmount0Delta</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint160</span> sqrtPriceAX96,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint160</span> sqrtPriceBX96,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint128</span> liquidity
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span> amount0) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (sqrtPriceAX96 <span style="color:#f92672">&gt;</span> sqrtPriceBX96)
+</span></span><span style="display:flex;"><span>        (sqrtPriceAX96, sqrtPriceBX96) <span style="color:#f92672">=</span> (sqrtPriceBX96, sqrtPriceAX96);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    require(sqrtPriceAX96 <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    amount0 <span style="color:#f92672">=</span> divRoundingUp(
+</span></span><span style="display:flex;"><span>        mulDivRoundingUp(
+</span></span><span style="display:flex;"><span>            (<span style="color:#66d9ef">uint256</span>(liquidity) <span style="color:#f92672">&lt;&lt;</span> FixedPoint96.RESOLUTION),
+</span></span><span style="display:flex;"><span>            (sqrtPriceBX96 <span style="color:#f92672">-</span> sqrtPriceAX96),
+</span></span><span style="display:flex;"><span>            sqrtPriceBX96
+</span></span><span style="display:flex;"><span>        ),
+</span></span><span style="display:flex;"><span>        sqrtPriceAX96
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><blockquote>
+<p>这个函数的功能与Python脚本中的<code>calc_amount0</code>一致。</p>
+</blockquote>
+<p>第一步是将两个价格排序来保证减法时不会溢出。接下来，我们将<code>liquidity</code>转换成Q96.64格式的数字，只需要乘以 2**96。下一步，根据公式，我们将其乘以价格之差并除以两个价格（先除以大的，再除以小的）。两个除法的顺序并不重要，但是我们的除法要分两步进行，因为分母的惩罚可能会导致溢出。</p>
+<p>我们使用了 <code>mulDivRoundingUp</code> 函数来在一步中进行乘除。这个函数是基于 <code>PRBMath</code> 库中的 <code>mulDiv</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">mulDivRoundingUp</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> a,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> b,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> denominator
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span> result) {
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> PRBMath.mulDiv(a, b, denominator);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (mulmod(a, b, denominator) <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>        require(result <span style="color:#f92672">&lt;</span> type(<span style="color:#a6e22e">uint256</span>).max);
+</span></span><span style="display:flex;"><span>        result<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>mulmod</code> 是Solidity的一个函数，将两个数<code>a</code>和<code>b</code>相乘，乘积除以<code>denominator</code>，返回余数。如果余数为正，我们将结果上取整。</p>
+<p>接下来是 $\Delta y$：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">calcAmount1Delta</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint160</span> sqrtPriceAX96,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint160</span> sqrtPriceBX96,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint128</span> liquidity
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">internal</span> <span style="color:#66d9ef">pure</span> <span style="color:#66d9ef">returns</span> (<span style="color:#66d9ef">uint256</span> amount1) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (sqrtPriceAX96 <span style="color:#f92672">&gt;</span> sqrtPriceBX96)
+</span></span><span style="display:flex;"><span>        (sqrtPriceAX96, sqrtPriceBX96) <span style="color:#f92672">=</span> (sqrtPriceBX96, sqrtPriceAX96);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    amount1 <span style="color:#f92672">=</span> mulDivRoundingUp(
+</span></span><span style="display:flex;"><span>        liquidity,
+</span></span><span style="display:flex;"><span>        (sqrtPriceBX96 <span style="color:#f92672">-</span> sqrtPriceAX96),
+</span></span><span style="display:flex;"><span>        FixedPoint96.Q96
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><blockquote>
+<p>这个函数与Python脚本中的<code>calc_amount1</code>一致。</p>
+</blockquote>
+<p>同样我们使用<code>mulDivRoundingUp</code>来防止乘法过程中的溢出。</p>
+<p>现在它们都完成了！我们现在可以使用这些函数来计算token数量了：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// src/UniswapV3Pool.sol
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">mint</span>(...) {
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>    Slot0 <span style="color:#66d9ef">memory</span> slot0_ <span style="color:#f92672">=</span> slot0;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    amount0 <span style="color:#f92672">=</span> Math.calcAmount0Delta(
+</span></span><span style="display:flex;"><span>        slot0_.sqrtPriceX96,
+</span></span><span style="display:flex;"><span>        TickMath.getSqrtRatioAtTick(upperTick),
+</span></span><span style="display:flex;"><span>        amount
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    amount1 <span style="color:#f92672">=</span> Math.calcAmount1Delta(
+</span></span><span style="display:flex;"><span>        slot0_.sqrtPriceX96,
+</span></span><span style="display:flex;"><span>        TickMath.getSqrtRatioAtTick(lowerTick),
+</span></span><span style="display:flex;"><span>        amount
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>其余的一切都保持不变。测试脚本中的数字需要更新，因为取整的缘故会与我们一开始手动计算的略有不同。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#通用mint">通用mint</a>
+      <ul>
+        <li><a href="#初始化tick与更新">初始化tick与更新</a></li>
+        <li><a href="#token数量计算">Token数量计算</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

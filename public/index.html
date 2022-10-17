@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+	<meta name="generator" content="Hugo 0.103.1" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Uniswap V3 Book 中文版 # English/中文
+🚧 IN DEVELOPMENT 🚧 # 本书仍然在修订中，暂未完工. All TODOs will be replaced with something useful.
+TODO: add cover
+Welcome to the world of decentralized finances and automated market makers! This book will be your guide in this mysterious and amusing world! Together, we&rsquo;ll build one of the most interesting and important applications, which serves as a pillar of today&rsquo;s decentralized finances–Uniswap V3!
+This book will guide you through the development of a decentralized application, including:">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="Introduction" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://uniswapv3book.com/" />
+
+<title>Introduction | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="https://uniswapv3book.com/index.xml" title="Uniswap V3 Book 中文版" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Introduction</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#uniswap-v3-book-中文版">Uniswap V3 Book 中文版</a>
+      <ul>
+        <li><a href="#-in-development-">🚧 IN DEVELOPMENT 🚧</a>
+          <ul>
+            <li><a href="#this-book-is-not-for-complete-beginners">This book is not for complete beginners</a></li>
+            <li><a href="#however-this-book-is-for-blockchain-beginners">However, this book is for blockchain beginners</a></li>
+          </ul>
+        </li>
+        <li><a href="#useful-links">Useful links</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="uniswap-v3-book-中文版">
+  Uniswap V3 Book 中文版
+  <a class="anchor" href="#uniswap-v3-book-%e4%b8%ad%e6%96%87%e7%89%88">#</a>
+</h1>
+<p><a href="https://uniswapv3book.com/">English</a>/中文</p>
+<h2 id="-in-development-">
+  🚧 IN DEVELOPMENT 🚧
+  <a class="anchor" href="#-in-development-">#</a>
+</h2>
+<p><strong>本书仍然在修订中，暂未完工. All <code>TODO</code>s will be replaced with something
+useful.</strong></p>
+<p>TODO: add cover</p>
+<p>Welcome to the world of decentralized finances and automated market makers! This book will be your guide in this
+mysterious and amusing world! Together, we&rsquo;ll build one of the most interesting and important applications, which serves
+as a pillar of today&rsquo;s decentralized finances–<strong>Uniswap V3</strong>!</p>
+<p>This book will guide you through the development of a decentralized application, including:</p>
+<ul>
+<li>smart-contract development (in <a href="https://docs.soliditylang.org/en/latest/index.html">Solidity</a>);</li>
+<li>contracts testing and deployment (using Forge and Anvil from <a href="https://github.com/foundry-rs/foundry">Foundry</a>);</li>
+<li>design and mathematics of a decentralized exchange;</li>
+<li>development of a front-end application for the exchange (<a href="https://reactjs.org/">React</a> and <a href="https://metamask.io/">MetaMask</a>).</li>
+</ul>
+<h3 id="this-book-is-not-for-complete-beginners">
+  This book is not for complete beginners
+  <a class="anchor" href="#this-book-is-not-for-complete-beginners">#</a>
+</h3>
+<p>I expect you to be an experienced developer, who has ever programmed in any programming language. It&rsquo;ll also be helpful
+if you know <a href="https://docs.soliditylang.org/en/v0.8.17/introduction-to-smart-contracts.html">the syntax of Solidity</a>,
+the main programming language of this book. If not, it&rsquo;s not a big problem: we&rsquo;ll learn a lot about Solidity and
+Ethereum Virtual Machine during our journey.</p>
+<h3 id="however-this-book-is-for-blockchain-beginners">
+  However, this book is for blockchain beginners
+  <a class="anchor" href="#however-this-book-is-for-blockchain-beginners">#</a>
+</h3>
+<p>If you only heard about blockchains and were interested but haven&rsquo;t had a chance to dive deeper, this book is for you!
+Yes, for you personally! You&rsquo;ll learn how to develop for blockchains (specifically, Ethereum), how blockchains work, how
+to program and deploy smart contracts, and how to run and test them on your computer.</p>
+<p>Alright, let&rsquo;s get started!</p>
+<hr>
+<h2 id="useful-links">
+  Useful links
+  <a class="anchor" href="#useful-links">#</a>
+</h2>
+<ol>
+<li>This book is available at: <a href="https://uniswapv3book.com/">https://uniswapv3book.com/</a></li>
+<li>This book is hosted on GitHub: <a href="https://github.com/Jeiwan/uniswapv3-book">https://github.com/Jeiwan/uniswapv3-book</a></li>
+<li>All source codes are hosted in a separate repo: <a href="https://github.com/Jeiwan/uniswapv3-code">https://github.com/Jeiwan/uniswapv3-code</a></li>
+<li>If you think you can help Uniswap, they have <a href="https://www.notion.so/unigrants/Welcome-to-UNI-Grants-6e3e84967a984a5fb127ae749649ddc9">a grants program</a>.</li>
+<li>If you&rsquo;re interested in DeFi and blockchains, <a href="https://twitter.com/jeiwan7">follow me on Twitter</a>.</li>
+</ol>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#uniswap-v3-book-中文版">Uniswap V3 Book 中文版</a>
+      <ul>
+        <li><a href="#-in-development-">🚧 IN DEVELOPMENT 🚧</a>
+          <ul>
+            <li><a href="#this-book-is-not-for-complete-beginners">This book is not for complete beginners</a></li>
+            <li><a href="#however-this-book-is-for-blockchain-beginners">However, this book is for blockchain beginners</a></li>
+          </ul>
+        </li>
+        <li><a href="#useful-links">Useful links</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

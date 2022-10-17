@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="\[ \] 部署 # 我们的第一版合约已经完成了。现在，让我们来看看如何把它部署在一个本地以太坊网络上，方便我们之后用前端app交互。
+选择本地网络 # 智能合约的开发需要运行一个本地的网络来在开发过程中进行部署和测试。这样的网络需要具有以下特点：
+真实的区块链。它必须是一个真实的区块链网络而不是一个模拟器，我们希望我们的合约如果能够在这样的网络上正常工作那也一定能在主网上正常工作 速度。我们希望我们的交易能够快速被执行，这样我们能快速迭代。 以太币。为了支付gas费，我们需要一些eth，因此我们希望这个网络能够允许我们生成任意数量的eth cheat code。除了提供标准的API，我们还希望这个网络能让我们做更多的事，例如：在任何地址上部署合约，以任何地址执行交易，直接修改合约状态等等。 今天，有许多的工具能够提供这样的功能：
+Truffle套件中的Ganache Hardhat，一套智能合约开发环境，除了包含本地网络节点以外还有很多有用的工具 Foundry中的Anvil 所有这些解决方案都能够满足我们的需求。尽管如此，项目现在都逐渐从Ganache（最早的解决方案）迁移到Hardhat（目前使用最广的方案），而Foundry也成为开发者的新宠。Foundry也是上述三个方案中唯一使用Solidity来编写测试的框架（其他框架都使用JavaScript）。除此以外，Foundry还允许使用Solidity来编写部署脚本。因此，由于我们想在各处都使用Solidity，我们会使用 Anvil 来运行一个本地区块链，并且使用Solidity编写部署脚本。
+运行本地区块链 # Anvil不需要进行配置，我们可以直接在命令行运行：
+$ anvil _ _ (_) | | __ _ _ __ __ __ _ | | / _` | | &#39;_ \ \ \ / / | | | | | (_| | | | | | \ V / | | | | \__,_| |_| |_| \_/ |_| |_| 0.">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="部署合约" />
+<meta property="og:description" content="\[ \] 部署 # 我们的第一版合约已经完成了。现在，让我们来看看如何把它部署在一个本地以太坊网络上，方便我们之后用前端app交互。
+选择本地网络 # 智能合约的开发需要运行一个本地的网络来在开发过程中进行部署和测试。这样的网络需要具有以下特点：
+真实的区块链。它必须是一个真实的区块链网络而不是一个模拟器，我们希望我们的合约如果能够在这样的网络上正常工作那也一定能在主网上正常工作 速度。我们希望我们的交易能够快速被执行，这样我们能快速迭代。 以太币。为了支付gas费，我们需要一些eth，因此我们希望这个网络能够允许我们生成任意数量的eth cheat code。除了提供标准的API，我们还希望这个网络能让我们做更多的事，例如：在任何地址上部署合约，以任何地址执行交易，直接修改合约状态等等。 今天，有许多的工具能够提供这样的功能：
+Truffle套件中的Ganache Hardhat，一套智能合约开发环境，除了包含本地网络节点以外还有很多有用的工具 Foundry中的Anvil 所有这些解决方案都能够满足我们的需求。尽管如此，项目现在都逐渐从Ganache（最早的解决方案）迁移到Hardhat（目前使用最广的方案），而Foundry也成为开发者的新宠。Foundry也是上述三个方案中唯一使用Solidity来编写测试的框架（其他框架都使用JavaScript）。除此以外，Foundry还允许使用Solidity来编写部署脚本。因此，由于我们想在各处都使用Solidity，我们会使用 Anvil 来运行一个本地区块链，并且使用Solidity编写部署脚本。
+运行本地区块链 # Anvil不需要进行配置，我们可以直接在命令行运行：
+$ anvil _ _ (_) | | __ _ _ __ __ __ _ | | / _` | | &#39;_ \ \ \ / / | | | | | (_| | | | | | \ V / | | | | \__,_| |_| |_| \_/ |_| |_| 0." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://uniswapv3book.com/docs/milestone_1/deployment/" /><meta property="article:section" content="docs" />
+
+
+
+<title>部署合约 | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="active">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>部署合约</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#部署">部署</a>
+      <ul>
+        <li><a href="#选择本地网络">选择本地网络</a></li>
+        <li><a href="#运行本地区块链">运行本地区块链</a></li>
+        <li><a href="#第一次部署">第一次部署</a></li>
+        <li><a href="#与合约交互abi">与合约交互，ABI</a>
+          <ul>
+            <li><a href="#token余额">Token余额</a></li>
+            <li><a href="#现在的tick和价格">现在的tick和价格</a></li>
+            <li><a href="#abi">ABI</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown">
+<link rel="stylesheet" href="https://uniswapv3book.com/katex/katex.min.css" />
+<script>
+  function renderKatex(element) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      
+      throwOnError: false
+    });
+  }
+</script>
+<script defer src="https://uniswapv3book.com/katex/katex.min.js"></script>
+<script defer src="https://uniswapv3book.com/katex/auto-render.min.js" onload="renderKatex(document.body)"></script><span>
+  \[ \]
+</span>
+<h1 id="部署">
+  部署
+  <a class="anchor" href="#%e9%83%a8%e7%bd%b2">#</a>
+</h1>
+<p>我们的第一版合约已经完成了。现在，让我们来看看如何把它部署在一个本地以太坊网络上，方便我们之后用前端app交互。</p>
+<h2 id="选择本地网络">
+  选择本地网络
+  <a class="anchor" href="#%e9%80%89%e6%8b%a9%e6%9c%ac%e5%9c%b0%e7%bd%91%e7%bb%9c">#</a>
+</h2>
+<p>智能合约的开发需要运行一个本地的网络来在开发过程中进行部署和测试。这样的网络需要具有以下特点：</p>
+<ol>
+<li>真实的区块链。它必须是一个真实的区块链网络而不是一个模拟器，我们希望我们的合约如果能够在这样的网络上正常工作那也一定能在主网上正常工作</li>
+<li>速度。我们希望我们的交易能够快速被执行，这样我们能快速迭代。</li>
+<li>以太币。为了支付gas费，我们需要一些eth，因此我们希望这个网络能够允许我们生成任意数量的eth</li>
+<li>cheat code。除了提供标准的API，我们还希望这个网络能让我们做更多的事，例如：在任何地址上部署合约，以任何地址执行交易，直接修改合约状态等等。</li>
+</ol>
+<p>今天，有许多的工具能够提供这样的功能：</p>
+<ol>
+<li>Truffle套件中的<a href="https://trufflesuite.com/ganache/">Ganache</a></li>
+<li><a href="https://hardhat.org/">Hardhat</a>，一套智能合约开发环境，除了包含本地网络节点以外还有很多有用的工具</li>
+<li>Foundry中的<a href="https://github.com/foundry-rs/foundry/tree/master/anvil">Anvil</a></li>
+</ol>
+<p>所有这些解决方案都能够满足我们的需求。尽管如此，项目现在都逐渐从Ganache（最早的解决方案）迁移到Hardhat（目前使用最广的方案），而Foundry也成为开发者的新宠。Foundry也是上述三个方案中唯一使用Solidity来编写测试的框架（其他框架都使用JavaScript）。除此以外，Foundry还允许使用Solidity来编写部署脚本。因此，由于我们想在各处都使用Solidity，我们会使用 Anvil 来运行一个本地区块链，并且使用Solidity编写部署脚本。</p>
+<h2 id="运行本地区块链">
+  运行本地区块链
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e6%9c%ac%e5%9c%b0%e5%8c%ba%e5%9d%97%e9%93%be">#</a>
+</h2>
+<p>Anvil不需要进行配置，我们可以直接在命令行运行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ anvil
+</span></span><span style="display:flex;"><span>                             _   _
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">(</span>_<span style="color:#f92672">)</span> | |
+</span></span><span style="display:flex;"><span>      __ _   _ __   __   __  _  | |
+</span></span><span style="display:flex;"><span>     / _<span style="color:#e6db74">`</span> | | <span style="color:#960050;background-color:#1e0010">&#39;</span>_ <span style="color:#ae81ff">\ </span> <span style="color:#ae81ff">\ \ </span>/ / | | | |
+</span></span><span style="display:flex;"><span>    | <span style="color:#f92672">(</span>_| | | | | |  <span style="color:#ae81ff">\ </span>V /  | | | |
+</span></span><span style="display:flex;"><span>     <span style="color:#ae81ff">\_</span>_,_| |_| |_|   <span style="color:#ae81ff">\_</span>/   |_| |_|
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    0.1.0 <span style="color:#f92672">(</span>d89f6af 2022-06-24T00:15:17.897682Z<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    https://github.com/foundry-rs/foundry
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>Listening on 127.0.0.1:8545
+</span></span></code></pre></div><p>Anvil运行一个以太坊节点，所以它实际上并不是个网络，但也没什么问题。默认配置下它会创建10个账户，每个有10000ETH。它会把这些账户和对应私钥打印在命令行，我们会使用其中一个来部署合约和与其交互。</p>
+<p>Anvil在<code>127.0.0.1:8545</code>开放了JSON-RPC API接口——这个接口是与以太坊节点交互的主要方式。你可以在<a href="https://ethereum.org/en/developers/docs/apis/json-rpc/">这里</a>找到完整的API文档。在这里，你可以用curl与其交互：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --data <span style="color:#e6db74">&#39;{&#34;id&#34;:1,&#34;jsonrpc&#34;:&#34;2.0&#34;,&#34;method&#34;:&#34;eth_chainId&#34;}&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  http://127.0.0.1:8545
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span><span style="color:#e6db74">&#34;jsonrpc&#34;</span>:<span style="color:#e6db74">&#34;2.0&#34;</span>,<span style="color:#e6db74">&#34;id&#34;</span>:1,<span style="color:#e6db74">&#34;result&#34;</span>:<span style="color:#e6db74">&#34;0x7a69&#34;</span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>$ curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --data <span style="color:#e6db74">&#39;{&#34;id&#34;:1,&#34;jsonrpc&#34;:&#34;2.0&#34;,&#34;method&#34;:&#34;eth_getBalance&#34;,&#34;params&#34;:[&#34;0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266&#34;,&#34;latest&#34;]}&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  http://127.0.0.1:8545
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span><span style="color:#e6db74">&#34;jsonrpc&#34;</span>:<span style="color:#e6db74">&#34;2.0&#34;</span>,<span style="color:#e6db74">&#34;id&#34;</span>:1,<span style="color:#e6db74">&#34;result&#34;</span>:<span style="color:#e6db74">&#34;0x21e19e0c9bab2400000&#34;</span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>你也可以使用<code>cast</code>（foundry中的另一个组件）来访问：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cast chain-id
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">31337</span>
+</span></span><span style="display:flex;"><span>$ cast balance 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">10000000000000000000000</span>
+</span></span></code></pre></div><p>现在，我们来将池子合约和管理合约都部署在本地网络上。</p>
+<h2 id="第一次部署">
+  第一次部署
+  <a class="anchor" href="#%e7%ac%ac%e4%b8%80%e6%ac%a1%e9%83%a8%e7%bd%b2">#</a>
+</h2>
+<p>根本上来讲，部署一个合约意味着：</p>
+<ol>
+<li>将源代码编译成EVM字节码</li>
+<li>发送一个包含这些字节码的交易</li>
+<li>新建一个地址，执行字节码中构造函数的部分，将初始化的字节码存放在该地址。这一步是由以太坊节点自动完成的，在这笔交易被打包上链时。</li>
+</ol>
+<p>部署通常包含很多个步骤：准备参数，部署辅助合约，部署主合约，初始化合约等等。脚本能帮助我们自动化完成这些步骤，并且我们现在能用Solidity来编写脚本！</p>
+<p>创建 <code>scripts/DeployDevelopment.sol</code> 文件，写入以下内容：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#75715e">// SPDX-License-Identifier: UNLICENSED
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">pragma solidity</span> <span style="color:#f92672">^</span><span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">8</span>.<span style="color:#ae81ff">14</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;forge-std/Script.sol&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">contract</span> <span style="color:#a6e22e">DeployDevelopment</span> <span style="color:#66d9ef">is</span> Script {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">run</span>() <span style="color:#66d9ef">public</span> {
+</span></span><span style="display:flex;"><span>      ...
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>它看起来与测试合约十分相似，唯一的差别在于它继承自<code>Script</code>合约而不是<code>Test</code>。并且按照惯例，我们需要定义一个<code>run</code>函数作为部署脚本的主体。在<code>run</code>函数中，我们首先定义部署需要的参数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">uint256</span> wethBalance <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#66d9ef">ether</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">uint256</span> usdcBalance <span style="color:#f92672">=</span> <span style="color:#ae81ff">5042</span> <span style="color:#66d9ef">ether</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int24</span> currentTick <span style="color:#f92672">=</span> <span style="color:#ae81ff">85176</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">uint160</span> currentSqrtP <span style="color:#f92672">=</span> <span style="color:#ae81ff">5602277097478614198912276234240</span>;
+</span></span></code></pre></div><p>这些正是我们之前用过的值。这里我们需要铸造5042个USDC——其中5000个用来提供流动性，42个用来交易。</p>
+<p>接下来，我们定义一系列在部署过程中需要执行的交易（每一步都是独立的交易）。我们使用<code>startBroadcast/endBroadcast</code>这个 cheat code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>vm.startBroadcast();
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>vm.stopBroadcast();
+</span></span></code></pre></div><blockquote>
+<p>这些cheat code可以在<a href="https://github.com/foundry-rs/foundry/tree/master/forge#cheat-codes">forge的文档</a>中找到，我们是从继承的<code>forge-std/Script.sol</code>里面得到这些功能的。</p>
+</blockquote>
+<p>在<code>broadcast()</code> cheat code后面，或者<code>startBroadcast()/stopBroadcast()</code>之间的所有语句都会被转化成交易，这些交易会被发送到执行这个脚本的节点。</p>
+<p>在这两个cheat code之间，我们开始真正的部署步骤。首先需要部署两种token：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>ERC20Mintable token0 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ERC20Mintable(<span style="color:#e6db74">&#34;Wrapped Ether&#34;</span>, <span style="color:#e6db74">&#34;WETH&#34;</span>, <span style="color:#ae81ff">18</span>);
+</span></span><span style="display:flex;"><span>ERC20Mintable token1 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ERC20Mintable(<span style="color:#e6db74">&#34;USD Coin&#34;</span>, <span style="color:#e6db74">&#34;USDC&#34;</span>, <span style="color:#ae81ff">18</span>);
+</span></span></code></pre></div><p>没有token我们就无法部署池子，因此需要先部署token合约
+（译者注：由于原生代币ETH没有approve功能，因此在这里使用的是WETH。在各种金融协议中，原生ETH通常都被单独拿出来处理）</p>
+<blockquote>
+<p>由于我们是在本地网络上进行部署，我们需要自行部署对应的token。在主网上和公开测试网上(Ropsten, Goerli, Sepolia)，这些token已经被部署。因此，如果想要在这些网络上进行部署，我们需要写网络特定的部署脚本。</p>
+</blockquote>
+<p>接下来就是部署池子合约：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>UniswapV3Pool pool <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UniswapV3Pool(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">address</span>(token0),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">address</span>(token1),
+</span></span><span style="display:flex;"><span>    currentSqrtP,
+</span></span><span style="display:flex;"><span>    currentTick
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><p>然后部署管理合约：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>UniswapV3Manager manager <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UniswapV3Manager();
+</span></span></code></pre></div><p>最后，我们给我们自己的地址铸造一些token用来之后交易：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>token0.mint(msg.sender, wethBalance);
+</span></span><span style="display:flex;"><span>token1.mint(msg.sender, usdcBalance);
+</span></span></code></pre></div><blockquote>
+<p>在Foundry脚本中，<code>msg.sender</code>是在<code>broadcast</code>块中发送交易的地址。我们可以在运行脚本的时候对其进行设置。</p>
+</blockquote>
+<p>在脚本的最后，使用<code>console.log</code>打印出对应的地址信息：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span>console.log(<span style="color:#e6db74">&#34;WETH address&#34;</span>, <span style="color:#66d9ef">address</span>(token0));
+</span></span><span style="display:flex;"><span>console.log(<span style="color:#e6db74">&#34;USDC address&#34;</span>, <span style="color:#66d9ef">address</span>(token1));
+</span></span><span style="display:flex;"><span>console.log(<span style="color:#e6db74">&#34;Pool address&#34;</span>, <span style="color:#66d9ef">address</span>(pool));
+</span></span><span style="display:flex;"><span>console.log(<span style="color:#e6db74">&#34;Manager address&#34;</span>, <span style="color:#66d9ef">address</span>(manager));
+</span></span></code></pre></div><p>现在我们来运行这个脚本（确保Anvil在另一个窗口中正在运行）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ forge script scripts/DeployDevelopment.s.sol --broadcast --fork-url http://localhost:8545 --private-key $PRIVATE_KEY
+</span></span></code></pre></div><p><code>--broadcast</code> 启动交易的广播。它并不是默认开启的因为并不是每一个脚本都需要发送交易。<code>--fork-url</code>设置我们要发送交易的节点地址。<code>--private-key</code>设置调用者的钱包：需要私钥来签名交易。我们可以选择之前Anvil启动时在命令行打印出来的任何一个私钥。作者选择了第一个地址和私钥。</p>
+<p>部署需要消耗几秒钟。最后，你会看到它发送了一系列的交易。它同时也将交易收据存在了<code>broadcast</code>文件夹。在Anvil运行的窗口里，你也能看到很多行例如<code>eth_sendRawTransaction</code>, <code>eth_getTransactionByHash</code>,
+和 <code>eth_getTransactionReceipt</code>这样的信息——在你向Anvil发送交易后，Forge使用 JSON-RPC API来检查它们的状态并且获得交易执行的结果（收据）。</p>
+<p>恭喜！你刚刚成功部署了一个智能合约！</p>
+<h2 id="与合约交互abi">
+  与合约交互，ABI
+  <a class="anchor" href="#%e4%b8%8e%e5%90%88%e7%ba%a6%e4%ba%a4%e4%ba%92abi">#</a>
+</h2>
+<p>现在，让我们来看看我们如何与已经部署的合约交互。</p>
+<p>每个合约都由一系列的public函数开放。以池子合约为例，包含<code>mint(...)</code> 和 <code>swap(...)</code>。除此之外，Solidity为每一个public的变量创建了getter，所以我们也可以调用<code>token0()</code>，<code>token1()</code>，<code>positions()</code>等等，来访问对应变量的值。然而，由于合约都被编译成字节码，<strong>函数名在编译过程中丢失并且不存储在区块链上</strong>。在链上，每个函数都用一个函数选择器(selector)来表示，即函数签名哈希的前4字节。伪代码即为：</p>
+<pre tabindex="0"><code>hash(&#34;transfer(address,address,uint256)&#34;)[0:4]
+</code></pre><blockquote>
+<p>EVM 使用的是 <a href="https://en.wikipedia.org/wiki/SHA-3">Keccak 哈希算法</a>，标准化名字为SHA-3。特别地，Solidity中的哈希函数名字为<code>keccak256</code>。</p>
+</blockquote>
+<p>根据以上信息，我们展示两种对于部署的合约进行调用的方法：一种使用<code>curl</code>来进行底层的调用，一种使用<code>cast</code>。</p>
+<h3 id="token余额">
+  Token余额
+  <a class="anchor" href="#token%e4%bd%99%e9%a2%9d">#</a>
+</h3>
+<p>我们来检查一下部署者地址种的WETH余额。这个函数的签名是<code>balanceOf(address)</code>（在<a href="https://eips.ethereum.org/EIPS/eip-20">ERC-20</a>标准种定义），为了计算这个函数的ID（即选择器），我们计算哈希并取前4字节：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cast keccak <span style="color:#e6db74">&#34;balanceOf(address)&#34;</span>| cut -b 1-10
+</span></span><span style="display:flex;"><span>0x70a08231
+</span></span></code></pre></div><p>要把地址作为参数传递进去，我们把它附在函数选择器的后面（在左边padding到32个字节，因为地址在函数调用中占32字节）：</p>
+<blockquote>
+<p>0x70a08231000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266</p>
+</blockquote>
+<p><code>0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266</code> 是我们要查看余额的地址。这是本书选择的部署者的地址，也是Anvil创建时的第一个地址。</p>
+<p>接下来，我们会使用<code>eth_call</code> JSON-RPC 方法来进行这个调用。注意到，这一步不需要发送一个交易——我们仅仅是从合约中读取数据。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ params<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{&#34;from&#34;:&#34;0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266&#34;,&#34;to&#34;:&#34;0xe7f1725e7734ce288f8367e1bb143e90bb3f0512&#34;,&#34;data&#34;:&#34;0x70a08231000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266&#34;}&#39;</span>
+</span></span><span style="display:flex;"><span>$ curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --data <span style="color:#e6db74">&#39;{&#34;id&#34;:1,&#34;jsonrpc&#34;:&#34;2.0&#34;,&#34;method&#34;:&#34;eth_call&#34;,&#34;params&#34;:[&#39;</span><span style="color:#e6db74">&#34;</span>$params<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">&#39;,&#34;latest&#34;]}&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  http://127.0.0.1:8545
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span><span style="color:#e6db74">&#34;jsonrpc&#34;</span>:<span style="color:#e6db74">&#34;2.0&#34;</span>,<span style="color:#e6db74">&#34;id&#34;</span>:1,<span style="color:#e6db74">&#34;result&#34;</span>:<span style="color:#e6db74">&#34;0x00000000000000000000000000000000000000000000011153ce5e56cf880000&#34;</span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><blockquote>
+<p>&ldquo;to&rdquo; 地址是 USDC token 的地址，它是在上一步部署脚本运行时打印出的日志里面的地址。</p>
+</blockquote>
+<p>以太坊节点返回的结果是字节流，为了理解结果我们需要知道返回值的类型。在<code>balanceOf</code>函数中，返回值的类型是<code>uint256</code>。用<code>cast</code>可以把结果转换成十进制然后转换成ethers单位：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cast --to-dec 0x00000000000000000000000000000000000000000000011153ce5e56cf880000| cast --from-wei
+</span></span><span style="display:flex;"><span>5042.000000000000000000
+</span></span></code></pre></div><p>余额是正确的，我们在自己的地址中有 5042 USDC。</p>
+<h3 id="现在的tick和价格">
+  现在的tick和价格
+  <a class="anchor" href="#%e7%8e%b0%e5%9c%a8%e7%9a%84tick%e5%92%8c%e4%bb%b7%e6%a0%bc">#</a>
+</h3>
+<p>上述例子展示了底层的合约调用。通常来说，你永远不会使用<code>curl</code>来发起调用，而是使用某个更友好的工具或库。cast在这里也能够帮助我们简化这一过程。</p>
+<p>我们来使用<code>cast</code>获得当前合约的tick和price:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cast call POOL_ADDRESS <span style="color:#e6db74">&#34;slot0()&#34;</span>| xargs cast --abi-decode <span style="color:#e6db74">&#34;a()(uint160,int24)&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">5602277097478614198912276234240</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">85176</span>
+</span></span></code></pre></div><p>如此容易！第一个值就是我们的$\sqrt{P}$，第二个值就是现在的tick。</p>
+<blockquote>
+<p>由于 <code>--abi-decode</code> 需要完整的函数签名，我们必须声明一个函数名 &ldquo;a()&quot;，尽管我们只希望解码函数的输出。</p>
+</blockquote>
+<h3 id="abi">
+  ABI
+  <a class="anchor" href="#abi">#</a>
+</h3>
+<p>为了简化与合约的交易，Solidity编译器可以输出ABI，Application Binary Interface（应用二进制接口）。</p>
+<p>ABI是一个包含了合约中所有public方法和事件的 JSON 文件。文件的目的在于使得编码函数参数和解码函数输出都更加容易。我们可以通过Forge来获取ABI：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ forge inspect UniswapV3Pool abi
+</span></span></code></pre></div><p>可以看一看生成的文件，来更好地理解ABI意味着什么。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#部署">部署</a>
+      <ul>
+        <li><a href="#选择本地网络">选择本地网络</a></li>
+        <li><a href="#运行本地区块链">运行本地区块链</a></li>
+        <li><a href="#第一次部署">第一次部署</a></li>
+        <li><a href="#与合约交互abi">与合约交互，ABI</a>
+          <ul>
+            <li><a href="#token余额">Token余额</a></li>
+            <li><a href="#现在的tick和价格">现在的tick和价格</a></li>
+            <li><a href="#abi">ABI</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

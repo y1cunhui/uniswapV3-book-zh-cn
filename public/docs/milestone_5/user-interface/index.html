@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="User Interface # In this milestone, we&rsquo;ve added the ability to remove liquidity from a pool and collect accumulated fees. Thus, we need to reflect these changes in the user interface to allow users to remove liquidity.
+Fetching Positions # To let user choose how much liquidity to remove, we first need to fetch user&rsquo;s positions from a pool. To makes this easier, we can add a helper function to the Manager contract, which will return user position in a specific pool:">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="User Interface" />
+<meta property="og:description" content="User Interface # In this milestone, we&rsquo;ve added the ability to remove liquidity from a pool and collect accumulated fees. Thus, we need to reflect these changes in the user interface to allow users to remove liquidity.
+Fetching Positions # To let user choose how much liquidity to remove, we first need to fetch user&rsquo;s positions from a pool. To makes this easier, we can add a helper function to the Manager contract, which will return user position in a specific pool:" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://uniswapv3book.com/docs/milestone_5/user-interface/" /><meta property="article:section" content="docs" />
+
+
+
+<title>User Interface | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="active">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>User Interface</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#user-interface">User Interface</a>
+      <ul>
+        <li><a href="#fetching-positions">Fetching Positions</a></li>
+        <li><a href="#getting-pool-address">Getting Pool Address</a></li>
+        <li><a href="#removing-liquidity">Removing Liquidity</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="user-interface">
+  User Interface
+  <a class="anchor" href="#user-interface">#</a>
+</h1>
+<p>In this milestone, we&rsquo;ve added the ability to remove liquidity from a pool and collect accumulated fees. Thus, we need
+to reflect these changes in the user interface to allow users to remove liquidity.</p>
+<h2 id="fetching-positions">
+  Fetching Positions
+  <a class="anchor" href="#fetching-positions">#</a>
+</h2>
+<p>To let user choose how much liquidity to remove, we first need to fetch user&rsquo;s positions from a pool. To makes this
+easier, we can add a helper function to the Manager contract, which will return user position in a specific pool:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">getPosition</span>(GetPositionParams calldata params)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">view</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">returns</span> (
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint128</span> liquidity,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> feeGrowthInside0LastX128,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> feeGrowthInside1LastX128,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint128</span> tokensOwed0,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint128</span> tokensOwed1
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    IUniswapV3Pool pool <span style="color:#f92672">=</span> getPool(params.tokenA, params.tokenB, params.fee);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    (
+</span></span><span style="display:flex;"><span>        liquidity,
+</span></span><span style="display:flex;"><span>        feeGrowthInside0LastX128,
+</span></span><span style="display:flex;"><span>        feeGrowthInside1LastX128,
+</span></span><span style="display:flex;"><span>        tokensOwed0,
+</span></span><span style="display:flex;"><span>        tokensOwed1
+</span></span><span style="display:flex;"><span>    ) <span style="color:#f92672">=</span> pool.positions(
+</span></span><span style="display:flex;"><span>        keccak256(
+</span></span><span style="display:flex;"><span>            abi.encodePacked(
+</span></span><span style="display:flex;"><span>                params.owner,
+</span></span><span style="display:flex;"><span>                params.lowerTick,
+</span></span><span style="display:flex;"><span>                params.upperTick
+</span></span><span style="display:flex;"><span>            )
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This will free us from calculating a pool address and a position key on the front end.</p>
+<p>Then, after user typed in a position range, we can try fetching a position:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-js" data-lang="js"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">getAvailableLiquidity</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">debounce</span>((<span style="color:#a6e22e">amount</span>, <span style="color:#a6e22e">isLower</span>) =&gt; {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">lowerTick</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">priceToTick</span>(<span style="color:#a6e22e">isLower</span> <span style="color:#f92672">?</span> <span style="color:#a6e22e">amount</span> <span style="color:#f92672">:</span> <span style="color:#a6e22e">lowerPrice</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">upperTick</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">priceToTick</span>(<span style="color:#a6e22e">isLower</span> <span style="color:#f92672">?</span> <span style="color:#a6e22e">upperPrice</span> <span style="color:#f92672">:</span> <span style="color:#a6e22e">amount</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">params</span> <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tokenA</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">token0</span>.<span style="color:#a6e22e">address</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tokenB</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">token1</span>.<span style="color:#a6e22e">address</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fee</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">fee</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">owner</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">account</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">lowerTick</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">nearestUsableTick</span>(<span style="color:#a6e22e">lowerTick</span>, <span style="color:#a6e22e">feeToSpacing</span>[<span style="color:#a6e22e">fee</span>]),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">upperTick</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">nearestUsableTick</span>(<span style="color:#a6e22e">upperTick</span>, <span style="color:#a6e22e">feeToSpacing</span>[<span style="color:#a6e22e">fee</span>]),
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">manager</span>.<span style="color:#a6e22e">getPosition</span>(<span style="color:#a6e22e">params</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">position</span> =&gt; <span style="color:#a6e22e">setAvailableAmount</span>(<span style="color:#a6e22e">position</span>.<span style="color:#a6e22e">liquidity</span>.<span style="color:#a6e22e">toString</span>()))
+</span></span><span style="display:flex;"><span>    .<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">err</span> =&gt; <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#a6e22e">err</span>));
+</span></span><span style="display:flex;"><span>}, <span style="color:#ae81ff">500</span>);
+</span></span></code></pre></div><h2 id="getting-pool-address">
+  Getting Pool Address
+  <a class="anchor" href="#getting-pool-address">#</a>
+</h2>
+<p>Since we need to call <code>burn</code> and <code>collect</code> on a pool, we still need to compute pool&rsquo;s address on the front end. Recall
+that pool addresses are compute using the <code>CREATE2</code> opcode, which requires a salt and the hash of contract&rsquo;s code.
+Luckily, Ether.js has <code>getCreate2Address</code> function that allows to compute <code>CREATE2</code> in JavaScript:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-js" data-lang="js"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">sortTokens</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">tokenA</span>, <span style="color:#a6e22e">tokenB</span>) =&gt; {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tokenA</span>.<span style="color:#a6e22e">toLowerCase</span>() <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">tokenB</span>.<span style="color:#a6e22e">toLowerCase</span> <span style="color:#f92672">?</span> [<span style="color:#a6e22e">tokenA</span>, <span style="color:#a6e22e">tokenB</span>] <span style="color:#f92672">:</span> [<span style="color:#a6e22e">tokenB</span>, <span style="color:#a6e22e">tokenA</span>];
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">computePoolAddress</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">factory</span>, <span style="color:#a6e22e">tokenA</span>, <span style="color:#a6e22e">tokenB</span>, <span style="color:#a6e22e">fee</span>) =&gt; {
+</span></span><span style="display:flex;"><span>  [<span style="color:#a6e22e">tokenA</span>, <span style="color:#a6e22e">tokenB</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">sortTokens</span>(<span style="color:#a6e22e">tokenA</span>, <span style="color:#a6e22e">tokenB</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">ethers</span>.<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">getCreate2Address</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">factory</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ethers</span>.<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">keccak256</span>(
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">ethers</span>.<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">solidityPack</span>(
+</span></span><span style="display:flex;"><span>        [<span style="color:#e6db74">&#39;address&#39;</span>, <span style="color:#e6db74">&#39;address&#39;</span>, <span style="color:#e6db74">&#39;uint24&#39;</span>],
+</span></span><span style="display:flex;"><span>        [<span style="color:#a6e22e">tokenA</span>, <span style="color:#a6e22e">tokenB</span>, <span style="color:#a6e22e">fee</span>]
+</span></span><span style="display:flex;"><span>      )),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">poolCodeHash</span>
+</span></span><span style="display:flex;"><span>  );
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>However, pool&rsquo;s codehash has to be hard coded because we don&rsquo;t want to store its code on the front end to calculate
+the hash. So, we&rsquo;ll use Forge to get the hash:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ forge inspect UniswapV3Pool bytecode| xargs cast keccak 
+</span></span><span style="display:flex;"><span>0x...
+</span></span></code></pre></div><p>And then use the output value in a JS constant:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-js" data-lang="js"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">poolCodeHash</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;0x9dc805423bd1664a6a73b31955de538c338bac1f5c61beb8f4635be5032076a2&#34;</span>;
+</span></span></code></pre></div><h2 id="removing-liquidity">
+  Removing Liquidity
+  <a class="anchor" href="#removing-liquidity">#</a>
+</h2>
+<p>After obtaining liquidity amount and pool address, we&rsquo;re ready to call <code>burn</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-js" data-lang="js"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">removeLiquidity</span> <span style="color:#f92672">=</span> (<span style="color:#a6e22e">e</span>) =&gt; {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">preventDefault</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">token0</span> <span style="color:#f92672">||</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">token1</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">setLoading</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">lowerTick</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">nearestUsableTick</span>(<span style="color:#a6e22e">priceToTick</span>(<span style="color:#a6e22e">lowerPrice</span>), <span style="color:#a6e22e">feeToSpacing</span>[<span style="color:#a6e22e">fee</span>]);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">upperTick</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">nearestUsableTick</span>(<span style="color:#a6e22e">priceToTick</span>(<span style="color:#a6e22e">upperPrice</span>), <span style="color:#a6e22e">feeToSpacing</span>[<span style="color:#a6e22e">fee</span>]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">pool</span>.<span style="color:#a6e22e">burn</span>(<span style="color:#a6e22e">lowerTick</span>, <span style="color:#a6e22e">upperTick</span>, <span style="color:#a6e22e">amount</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">tx</span> =&gt; <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">wait</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">receipt</span> =&gt; {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">receipt</span>.<span style="color:#a6e22e">events</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">||</span> <span style="color:#a6e22e">receipt</span>.<span style="color:#a6e22e">events</span>[<span style="color:#ae81ff">0</span>].<span style="color:#a6e22e">event</span> <span style="color:#f92672">!==</span> <span style="color:#e6db74">&#34;Burn&#34;</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> Error(<span style="color:#e6db74">&#34;Missing Burn event after burning!&#34;</span>);
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">amount0Burned</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">receipt</span>.<span style="color:#a6e22e">events</span>[<span style="color:#ae81ff">0</span>].<span style="color:#a6e22e">args</span>.<span style="color:#a6e22e">amount0</span>;
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">amount1Burned</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">receipt</span>.<span style="color:#a6e22e">events</span>[<span style="color:#ae81ff">0</span>].<span style="color:#a6e22e">args</span>.<span style="color:#a6e22e">amount1</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">pool</span>.<span style="color:#a6e22e">collect</span>(<span style="color:#a6e22e">account</span>, <span style="color:#a6e22e">lowerTick</span>, <span style="color:#a6e22e">upperTick</span>, <span style="color:#a6e22e">amount0Burned</span>, <span style="color:#a6e22e">amount1Burned</span>)
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">then</span>(<span style="color:#a6e22e">tx</span> =&gt; <span style="color:#a6e22e">tx</span>.<span style="color:#a6e22e">wait</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">then</span>(() =&gt; <span style="color:#a6e22e">toggle</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#66d9ef">catch</span>(<span style="color:#a6e22e">err</span> =&gt; <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#a6e22e">err</span>));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>If burning was successful, we immediately call <code>collect</code> to collect the token amounts that were freed during burning.</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#user-interface">User Interface</a>
+      <ul>
+        <li><a href="#fetching-positions">Fetching Positions</a></li>
+        <li><a href="#getting-pool-address">Getting Pool Address</a></li>
+        <li><a href="#removing-liquidity">Removing Liquidity</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

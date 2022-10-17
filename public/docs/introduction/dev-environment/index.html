@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="开发环境 # 本书中，我们会搭建两个应用：
+链上：一套部署在以太坊上的智能合约 链下：一个与智能合约交互的前端应用 尽管本书把前端应用作为其中一部分，但不是我们的主要关注点。我们搭建前端仅仅为了展示智能合约是如何集成到前端应用中的。因为，前端部分是可选读内容，但在本书代码仓库中也提供者这部分的代码
+以太坊简介 # 以太坊是一个允许任何人在上面运行应用的区块链。它与一个传统云服务的主要区别在于：
+维持这个应用不需要付费，部署应用需要付费 应用代码是不可变的，在其部署后你没有办法再进行修改 用户调用你的应用需要花费gas（手续费） 为了更好地理解这些区别，我们来看一下以太坊的构建。
+以太坊的核心（其他区块链也是同理）是一个数据库。这个数据库中最有价值的数据是账户状态。以太坊中的每个账户包含一个地址，以及以下数据：
+余额：账户的以太坊(ether)余额 代码：部署在这个地址上的智能合约的字节码 存储：智能合约存储数据的空间 nonce：一个用来防止重放攻击的整数序号 （译者注：Ethereum和ether的中文译名均为以太坊，读者注意区分。Ethereum指的是这条区块链，ether指的是该链上的原生代币）
+以太坊的主要任务是安全地维护这些数据，防止未经授权的更改。
+同时，以太坊也是一个网络，网络中的每个计算机都独立地构建和维持这些状态。网络的主要目标是能够去中心化地访问数据库：没有任何单个权威机构可以单方面修改任何数据。这是通过叫做*共识(consensus)*的机制来实现的，即网络中节点遵守的一系列规则。如果有节点违反了规则，它将会被从这个网络中排除。
+有趣的是，区块链也可以使用MSQL！只是可能会存在一定的性能问题。以太坊中使用的是LevelDB，一个高效的KV数据库。
+每个以太坊节点运行EVM，以太坊虚拟机。虚拟机是一个能够执行其他程序的程序，EVM则是执行智能合约程序的程序。用户通过交易(transactions)与合约交互，除了能够简单的发送ether，交易也能够调用智能合约，需要传输的数据包括：
+一个合约函数的签名 函数参数 交易被打包进区块，区块被矿工挖出。网络中的每个节点都可以验证每一个区块中的每一笔交易。
+某种意义上来说，智能合约与JSON APIs有一定类似，区别就是你调用的是智能合约函数。与API的后端类似，智能合约也执行程序逻辑，并且也可能更改智能合约中存储的数据。与API不同的是，你需要发送一笔交易来改变区块链的状态，并且你需要为每一笔交易付费。
+最后，以太坊节点也实现了一套JSON-RPC API。我们可以通过这个API与节点进行交互：获取账户余额、估算gas费、获取区块和交易、发送交易、执行不上链的智能合约调用（仅能读数据）。在这里你可以获得一个可用端点的列表。
+交易也是通过这个API发送的, 参见 eth_sendTransaction.
+本地开发环境 # 我们将要搭建智能合约并且在以太坊上运行它们，这意味着我们需要一个节点。在本地测试和运行合约也需要一个节点。曾经这使得智能合约开发十分麻烦，因为在一个真实节点上运行大量的测试会十分缓慢。不过现在已经有了很多快速简洁的解决方案。例如Truffle 和 Hardhat。不过这些工具的问题在于我们需要用JavaScript来写测试以及与区块链的交互，这事因为Truffle和Hardhat都运行了一个本地节点，并且使用JavaScript的Web3库来与节点交互。
+我们将会选择一个新的框架，Foundry。
+Foundry # Foundry是一套用于以太坊应用开发的工具包。我们将会使用以下这些工具：
+Forge，一个Solidity的测试框架. Anvil，一个本地以太坊节点。我们将会用它来部署我们的合约，并且与前端app交互。 Cast, 一个非常好用的CLI工具。 Forge使智能合约开发更加容易。当使用Forge开发时，我们不需要运行一个本地节点来进行测试；Forge会在其内置的EVM上运行测试，大大加快了速度，不再需要给节点发送交易和挖出区块。除此以外，Forge还能够使用Solidity编写测试！Forge也内置了机制方便我们模拟区块链的各种状态：修改某个账户余额，从其他地址执行合约，把合约部署在任意地址等等。
+然而，我们仍然需要一个本地节点来部署合约。在这里我们将会使用Anvil。前端应用可以使用JavaScript的Web3库来与以太坊节点进行交互。
+Ethers.js # Ethers.js 是一个与Ethereum交互的JavaScript库. 这是Dapp开发中使用的两个最流行的JS库之一(另一个是web3.js)。这些库让我们可以使用JSON-API与以太坊节点交互，并且也有各种功能丰富的函数来帮助开发者更容易地开发应用。
+MetaMask # MetaMask是一个浏览器中的以太坊钱包。它是一个浏览器插件，可以安全地创建和存储私钥。Metamask也是最常用的以太坊钱包应用，我们将使用它来与我们的本地运行的节点进行交互。
+React # React 是前端开发中使用的一个著名的JS库. 本书并不要求会React，我们将会提供一个模板。、
+准备开发环境 # 创建一个新的文件夹，并在其中运行 forge init ：
+$ mkdir uniswapv3clone $ cd uniswapv3clone $ forge init 如果你使用Visual Studio Code进行开发，可以在forge init 中加入 --vscode 这个flas：forge init --vscode。Forge会在初始化时对于VSCode进行特别设置。">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="开发环境" />
+<meta property="og:description" content="开发环境 # 本书中，我们会搭建两个应用：
+链上：一套部署在以太坊上的智能合约 链下：一个与智能合约交互的前端应用 尽管本书把前端应用作为其中一部分，但不是我们的主要关注点。我们搭建前端仅仅为了展示智能合约是如何集成到前端应用中的。因为，前端部分是可选读内容，但在本书代码仓库中也提供者这部分的代码
+以太坊简介 # 以太坊是一个允许任何人在上面运行应用的区块链。它与一个传统云服务的主要区别在于：
+维持这个应用不需要付费，部署应用需要付费 应用代码是不可变的，在其部署后你没有办法再进行修改 用户调用你的应用需要花费gas（手续费） 为了更好地理解这些区别，我们来看一下以太坊的构建。
+以太坊的核心（其他区块链也是同理）是一个数据库。这个数据库中最有价值的数据是账户状态。以太坊中的每个账户包含一个地址，以及以下数据：
+余额：账户的以太坊(ether)余额 代码：部署在这个地址上的智能合约的字节码 存储：智能合约存储数据的空间 nonce：一个用来防止重放攻击的整数序号 （译者注：Ethereum和ether的中文译名均为以太坊，读者注意区分。Ethereum指的是这条区块链，ether指的是该链上的原生代币）
+以太坊的主要任务是安全地维护这些数据，防止未经授权的更改。
+同时，以太坊也是一个网络，网络中的每个计算机都独立地构建和维持这些状态。网络的主要目标是能够去中心化地访问数据库：没有任何单个权威机构可以单方面修改任何数据。这是通过叫做*共识(consensus)*的机制来实现的，即网络中节点遵守的一系列规则。如果有节点违反了规则，它将会被从这个网络中排除。
+有趣的是，区块链也可以使用MSQL！只是可能会存在一定的性能问题。以太坊中使用的是LevelDB，一个高效的KV数据库。
+每个以太坊节点运行EVM，以太坊虚拟机。虚拟机是一个能够执行其他程序的程序，EVM则是执行智能合约程序的程序。用户通过交易(transactions)与合约交互，除了能够简单的发送ether，交易也能够调用智能合约，需要传输的数据包括：
+一个合约函数的签名 函数参数 交易被打包进区块，区块被矿工挖出。网络中的每个节点都可以验证每一个区块中的每一笔交易。
+某种意义上来说，智能合约与JSON APIs有一定类似，区别就是你调用的是智能合约函数。与API的后端类似，智能合约也执行程序逻辑，并且也可能更改智能合约中存储的数据。与API不同的是，你需要发送一笔交易来改变区块链的状态，并且你需要为每一笔交易付费。
+最后，以太坊节点也实现了一套JSON-RPC API。我们可以通过这个API与节点进行交互：获取账户余额、估算gas费、获取区块和交易、发送交易、执行不上链的智能合约调用（仅能读数据）。在这里你可以获得一个可用端点的列表。
+交易也是通过这个API发送的, 参见 eth_sendTransaction.
+本地开发环境 # 我们将要搭建智能合约并且在以太坊上运行它们，这意味着我们需要一个节点。在本地测试和运行合约也需要一个节点。曾经这使得智能合约开发十分麻烦，因为在一个真实节点上运行大量的测试会十分缓慢。不过现在已经有了很多快速简洁的解决方案。例如Truffle 和 Hardhat。不过这些工具的问题在于我们需要用JavaScript来写测试以及与区块链的交互，这事因为Truffle和Hardhat都运行了一个本地节点，并且使用JavaScript的Web3库来与节点交互。
+我们将会选择一个新的框架，Foundry。
+Foundry # Foundry是一套用于以太坊应用开发的工具包。我们将会使用以下这些工具：
+Forge，一个Solidity的测试框架. Anvil，一个本地以太坊节点。我们将会用它来部署我们的合约，并且与前端app交互。 Cast, 一个非常好用的CLI工具。 Forge使智能合约开发更加容易。当使用Forge开发时，我们不需要运行一个本地节点来进行测试；Forge会在其内置的EVM上运行测试，大大加快了速度，不再需要给节点发送交易和挖出区块。除此以外，Forge还能够使用Solidity编写测试！Forge也内置了机制方便我们模拟区块链的各种状态：修改某个账户余额，从其他地址执行合约，把合约部署在任意地址等等。
+然而，我们仍然需要一个本地节点来部署合约。在这里我们将会使用Anvil。前端应用可以使用JavaScript的Web3库来与以太坊节点进行交互。
+Ethers.js # Ethers.js 是一个与Ethereum交互的JavaScript库. 这是Dapp开发中使用的两个最流行的JS库之一(另一个是web3.js)。这些库让我们可以使用JSON-API与以太坊节点交互，并且也有各种功能丰富的函数来帮助开发者更容易地开发应用。
+MetaMask # MetaMask是一个浏览器中的以太坊钱包。它是一个浏览器插件，可以安全地创建和存储私钥。Metamask也是最常用的以太坊钱包应用，我们将使用它来与我们的本地运行的节点进行交互。
+React # React 是前端开发中使用的一个著名的JS库. 本书并不要求会React，我们将会提供一个模板。、
+准备开发环境 # 创建一个新的文件夹，并在其中运行 forge init ：
+$ mkdir uniswapv3clone $ cd uniswapv3clone $ forge init 如果你使用Visual Studio Code进行开发，可以在forge init 中加入 --vscode 这个flas：forge init --vscode。Forge会在初始化时对于VSCode进行特别设置。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://uniswapv3book.com/docs/introduction/dev-environment/" /><meta property="article:section" content="docs" />
+
+
+
+<title>开发环境 | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="active">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>开发环境</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#开发环境">开发环境</a>
+      <ul>
+        <li><a href="#以太坊简介">以太坊简介</a></li>
+        <li><a href="#本地开发环境">本地开发环境</a>
+          <ul>
+            <li><a href="#foundry">Foundry</a></li>
+            <li><a href="#ethersjs">Ethers.js</a></li>
+            <li><a href="#metamask">MetaMask</a></li>
+            <li><a href="#react">React</a></li>
+          </ul>
+        </li>
+        <li><a href="#准备开发环境">准备开发环境</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="开发环境">
+  开发环境
+  <a class="anchor" href="#%e5%bc%80%e5%8f%91%e7%8e%af%e5%a2%83">#</a>
+</h1>
+<p>本书中，我们会搭建两个应用：</p>
+<ol>
+<li>链上：一套部署在以太坊上的智能合约</li>
+<li>链下：一个与智能合约交互的前端应用</li>
+</ol>
+<p>尽管本书把前端应用作为其中一部分，但不是我们的主要关注点。我们搭建前端仅仅为了展示智能合约是如何集成到前端应用中的。因为，前端部分是可选读内容，但在本书代码仓库中也提供者这部分的代码</p>
+<h2 id="以太坊简介">
+  以太坊简介
+  <a class="anchor" href="#%e4%bb%a5%e5%a4%aa%e5%9d%8a%e7%ae%80%e4%bb%8b">#</a>
+</h2>
+<p>以太坊是一个允许任何人在上面运行应用的区块链。它与一个传统云服务的主要区别在于：</p>
+<ol>
+<li>维持这个应用不需要付费，部署应用需要付费</li>
+<li>应用代码是不可变的，在其部署后你没有办法再进行修改</li>
+<li>用户调用你的应用需要花费gas（手续费）</li>
+</ol>
+<p>为了更好地理解这些区别，我们来看一下以太坊的构建。</p>
+<p>以太坊的核心（其他区块链也是同理）是一个数据库。这个数据库中最有价值的数据是<em>账户状态</em>。以太坊中的每个账户包含一个地址，以及以下数据：</p>
+<ol>
+<li>余额：账户的以太坊(ether)余额</li>
+<li>代码：部署在这个地址上的智能合约的字节码</li>
+<li>存储：智能合约存储数据的空间</li>
+<li>nonce：一个用来防止重放攻击的整数序号</li>
+</ol>
+<p>（译者注：Ethereum和ether的中文译名均为以太坊，读者注意区分。Ethereum指的是这条区块链，ether指的是该链上的原生代币）</p>
+<p>以太坊的主要任务是安全地维护这些数据，防止未经授权的更改。</p>
+<p>同时，以太坊也是一个网络，网络中的每个计算机都独立地构建和维持这些状态。网络的主要目标是能够<strong>去中心化地访问数据库</strong>：没有任何单个权威机构可以单方面修改任何数据。这是通过叫做*共识(consensus)*的机制来实现的，即网络中节点遵守的一系列规则。如果有节点违反了规则，它将会被从这个网络中排除。</p>
+<blockquote>
+<p>有趣的是，区块链也可以使用MSQL！只是可能会存在一定的性能问题。以太坊中使用的是<a href="https://github.com/google/leveldb">LevelDB</a>，一个高效的KV数据库。</p>
+</blockquote>
+<p>每个以太坊节点运行EVM，以太坊虚拟机。虚拟机是一个能够执行其他程序的程序，EVM则是执行智能合约程序的程序。用户通过交易(transactions)与合约交互，除了能够简单的发送ether，交易也能够调用智能合约，需要传输的数据包括：</p>
+<ol>
+<li>一个合约函数的签名</li>
+<li>函数参数</li>
+</ol>
+<p>交易被打包进区块，区块被矿工挖出。网络中的每个节点都可以验证每一个区块中的每一笔交易。</p>
+<p>某种意义上来说，智能合约与JSON APIs有一定类似，区别就是你调用的是智能合约函数。与API的后端类似，智能合约也执行程序逻辑，并且也可能更改智能合约中存储的数据。与API不同的是，你需要发送一笔交易来改变区块链的状态，并且你需要为每一笔交易付费。</p>
+<p>最后，以太坊节点也实现了一套JSON-RPC API。我们可以通过这个API与节点进行交互：获取账户余额、估算gas费、获取区块和交易、发送交易、执行不上链的智能合约调用（仅能读数据）。<a href="https://eth.wiki/json-rpc/API">在这里</a>你可以获得一个可用端点的列表。</p>
+<blockquote>
+<p>交易也是通过这个API发送的, 参见 <a href="https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_sendtransaction">eth_sendTransaction</a>.</p>
+</blockquote>
+<h2 id="本地开发环境">
+  本地开发环境
+  <a class="anchor" href="#%e6%9c%ac%e5%9c%b0%e5%bc%80%e5%8f%91%e7%8e%af%e5%a2%83">#</a>
+</h2>
+<p>我们将要搭建智能合约并且在以太坊上运行它们，这意味着我们需要一个节点。在本地测试和运行合约也需要一个节点。曾经这使得智能合约开发十分麻烦，因为在一个真实节点上运行大量的测试会十分缓慢。不过现在已经有了很多快速简洁的解决方案。例如<a href="https://trufflesuite.com">Truffle</a> 和 <a href="https://hardhat.org">Hardhat</a>。不过这些工具的问题在于我们需要用JavaScript来写测试以及与区块链的交互，这事因为Truffle和Hardhat都运行了一个本地节点，并且使用JavaScript的Web3库来与节点交互。</p>
+<p>我们将会选择一个新的框架，Foundry。</p>
+<h3 id="foundry">
+  Foundry
+  <a class="anchor" href="#foundry">#</a>
+</h3>
+<p><a href="https://github.com/foundry-rs/foundry">Foundry</a>是一套用于以太坊应用开发的工具包。我们将会使用以下这些工具：</p>
+<ol>
+<li><a href="https://github.com/foundry-rs/foundry/tree/master/forge">Forge</a>，一个Solidity的测试框架.</li>
+<li><a href="https://github.com/foundry-rs/foundry/tree/master/anvil">Anvil</a>，一个本地以太坊节点。我们将会用它来部署我们的合约，并且与前端app交互。</li>
+<li><a href="https://github.com/foundry-rs/foundry/tree/master/cast">Cast</a>, 一个非常好用的CLI工具。</li>
+</ol>
+<p>Forge使智能合约开发更加容易。当使用Forge开发时，我们不需要运行一个本地节点来进行测试；Forge会在其内置的EVM上运行测试，大大加快了速度，不再需要给节点发送交易和挖出区块。除此以外，Forge还能够使用Solidity编写测试！Forge也内置了机制方便我们模拟区块链的各种状态：修改某个账户余额，从其他地址执行合约，把合约部署在任意地址等等。</p>
+<p>然而，我们仍然需要一个本地节点来部署合约。在这里我们将会使用Anvil。前端应用可以使用JavaScript的Web3库来与以太坊节点进行交互。</p>
+<h3 id="ethersjs">
+  Ethers.js
+  <a class="anchor" href="#ethersjs">#</a>
+</h3>
+<p><a href="https://github.com/ethers-io/ethers.js/">Ethers.js</a> 是一个与Ethereum交互的JavaScript库. 这是Dapp开发中使用的两个最流行的JS库之一(另一个是<a href="https://github.com/ChainSafe/web3.js">web3.js</a>)。这些库让我们可以使用JSON-API与以太坊节点交互，并且也有各种功能丰富的函数来帮助开发者更容易地开发应用。</p>
+<h3 id="metamask">
+  MetaMask
+  <a class="anchor" href="#metamask">#</a>
+</h3>
+<p><a href="https://metamask.io/">MetaMask</a>是一个浏览器中的以太坊钱包。它是一个浏览器插件，可以安全地创建和存储私钥。Metamask也是最常用的以太坊钱包应用，我们将使用它来与我们的本地运行的节点进行交互。</p>
+<h3 id="react">
+  React
+  <a class="anchor" href="#react">#</a>
+</h3>
+<p><a href="https://reactjs.org/">React</a> 是前端开发中使用的一个著名的JS库. 本书并不要求会React，我们将会提供一个模板。、</p>
+<h2 id="准备开发环境">
+  准备开发环境
+  <a class="anchor" href="#%e5%87%86%e5%a4%87%e5%bc%80%e5%8f%91%e7%8e%af%e5%a2%83">#</a>
+</h2>
+<p>创建一个新的文件夹，并在其中运行 <code>forge init</code> ：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ mkdir uniswapv3clone
+</span></span><span style="display:flex;"><span>$ cd uniswapv3clone
+</span></span><span style="display:flex;"><span>$ forge init
+</span></span></code></pre></div><blockquote>
+<p>如果你使用Visual Studio Code进行开发，可以在<code>forge init</code> 中加入 <code>--vscode</code> 这个flas：<code>forge init --vscode</code>。Forge会在初始化时对于VSCode进行特别设置。</p>
+</blockquote>
+<p>Forge会在<code>src</code>, <code>test</code>, 和<code>script</code>创建样例合约，这些都可以删掉</p>
+<p>设置前端开发环境:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ npx create-react-app ui
+</span></span></code></pre></div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#开发环境">开发环境</a>
+      <ul>
+        <li><a href="#以太坊简介">以太坊简介</a></li>
+        <li><a href="#本地开发环境">本地开发环境</a>
+          <ul>
+            <li><a href="#foundry">Foundry</a></li>
+            <li><a href="#ethersjs">Ethers.js</a></li>
+            <li><a href="#metamask">MetaMask</a></li>
+            <li><a href="#react">React</a></li>
+          </ul>
+        </li>
+        <li><a href="#准备开发环境">准备开发环境</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

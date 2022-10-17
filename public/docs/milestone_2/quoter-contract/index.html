@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="报价合约 # 为了让我们的池子合约能够集成到前端，我们需要一种方式能够在交易之前就计算出对应的数量。用户会输入它们希望卖出的token数量，然后就能计算并且展示出它们会获得的token数量。我们将通过报价合约来实现这一功能。
+由于Uniswap V3中的流动性是分散在多个价格区间中的，我们不能够仅仅通过一个公式计算出对应数量（像在Uniswap V2中那样）。Uniswap V3的设计需要我们用一种不同的方法：为了获得交易数量，我们初始化一个真正的交易，并且在callback函数中打断它，获取到之前计算出的对应数量。也就是，我们将会模拟一笔真实的交易来计算输出数量！
+我们会创建这样一个辅助合约：
+contract UniswapV3Quoter { struct QuoteParams { address pool; uint256 amountIn; bool zeroForOne; } function quote(QuoteParams memory params) public returns ( uint256 amountOut, uint160 sqrtPriceX96After, int24 tickAfter ) { ... Quoter 合约仅实现了一个public的函数——quote。Quoter是一个对于所有池子的通用合约，因此它将池子地址作为一个参数。其他参数（amountIn 和 zeroForOne）都是模拟swap需要的参数。
+try IUniswapV3Pool(params.pool).swap( address(this), params.zeroForOne, params.amountIn, abi.encode(params.pool) ) {} catch (bytes memory reason) { return abi.decode(reason, (uint256, uint160, int24)); } 这个函数唯一实现的功能是调用池子合约的 swap 函数。这个调用应当revert（即抛出异常）——我们将会在callback中实现这一点。当revert发生的时候，对应的reason会解码并且返回。quote永远不会revert。注意到，在data字段，我们仅仅传入和合约的地址——因为在callback函数中，我们需要用它来获取对应池子的slot0。
+function uniswapV3SwapCallback( int256 amount0Delta, int256 amount1Delta, bytes memory data ) external view { address pool = abi.">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light dark"><meta property="og:title" content="报价合约" />
+<meta property="og:description" content="报价合约 # 为了让我们的池子合约能够集成到前端，我们需要一种方式能够在交易之前就计算出对应的数量。用户会输入它们希望卖出的token数量，然后就能计算并且展示出它们会获得的token数量。我们将通过报价合约来实现这一功能。
+由于Uniswap V3中的流动性是分散在多个价格区间中的，我们不能够仅仅通过一个公式计算出对应数量（像在Uniswap V2中那样）。Uniswap V3的设计需要我们用一种不同的方法：为了获得交易数量，我们初始化一个真正的交易，并且在callback函数中打断它，获取到之前计算出的对应数量。也就是，我们将会模拟一笔真实的交易来计算输出数量！
+我们会创建这样一个辅助合约：
+contract UniswapV3Quoter { struct QuoteParams { address pool; uint256 amountIn; bool zeroForOne; } function quote(QuoteParams memory params) public returns ( uint256 amountOut, uint160 sqrtPriceX96After, int24 tickAfter ) { ... Quoter 合约仅实现了一个public的函数——quote。Quoter是一个对于所有池子的通用合约，因此它将池子地址作为一个参数。其他参数（amountIn 和 zeroForOne）都是模拟swap需要的参数。
+try IUniswapV3Pool(params.pool).swap( address(this), params.zeroForOne, params.amountIn, abi.encode(params.pool) ) {} catch (bytes memory reason) { return abi.decode(reason, (uint256, uint160, int24)); } 这个函数唯一实现的功能是调用池子合约的 swap 函数。这个调用应当revert（即抛出异常）——我们将会在callback中实现这一点。当revert发生的时候，对应的reason会解码并且返回。quote永远不会revert。注意到，在data字段，我们仅仅传入和合约的地址——因为在callback函数中，我们需要用它来获取对应池子的slot0。
+function uniswapV3SwapCallback( int256 amount0Delta, int256 amount1Delta, bytes memory data ) external view { address pool = abi." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" /><meta property="article:section" content="docs" />
+
+
+
+<title>报价合约 | Uniswap V3 Book 中文版</title>
+<link rel="manifest" href="https://uniswapv3book.com/manifest.json">
+<link rel="icon" href="https://uniswapv3book.com/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="https://uniswapv3book.com/book.min.82c5dbd23447cee0b4c2aa3ed08ce0961faa40e1fa370eee4f8c9f02e0d46b5f.css" integrity="sha256-gsXb0jRHzuC0wqo&#43;0Izglh&#43;qQOH6Nw7uT4yfAuDUa18=" crossorigin="anonymous">
+  <script defer src="https://uniswapv3book.com/flexsearch.min.js"></script>
+  <script defer src="https://uniswapv3book.com/en.search.min.7bcb9cc1edbdbe78ffa7aeda28e09d51033768c24a465538e9da7066e43237d4.js" integrity="sha256-e8ucwe29vnj/p67aKOCdUQM3aMJKRlU46dpwZuQyN9Q=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="https://uniswapv3book.com/"><span>Uniswap V3 Book 中文版</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 0. 简介</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/introduction-to-markets/" class="">交易市场简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/constant-function-market-maker/" class="">恒定函数做市商(CFMM)</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/uniswap-v3/" class="">Uniswap V3</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/introduction/dev-environment/" class="">开发环境</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 1. 第一笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/calculating-liquidity/" class="">计算流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/providing-liquidity/" class="">提供流动性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/first-swap/" class="">第一笔交易</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/manager-contract/" class="">管理合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/deployment/" class="">部署合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_1/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 2. 第二笔交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/output-amount-calculation/" class="">输出金额计算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/math-in-solidity/" class="">Solidity中的数学运算</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/tick-bitmap-index/" class="">Tick Bitmap Index</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-minting/" class="">通用mint</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/generalize-swapping/" class="">通用swap</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/quoter-contract/" class="active">报价合约</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_2/user-interface/" class="">用户界面</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 3. 跨tick交易</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/introduction/" class="">简介</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/different-ranges/" class="">不同价格区间</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/cross-tick-swaps/" class="">Cross-Tick Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/slippage-protection/" class="">Slippage Protection</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/liquidity-calculation/" class="">Liquidity Calculation</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/more-on-fixed-point-numbers/" class="">A Little Bit More on Fixed-point Numbers</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/flash-loans/" class="">Flash Loans</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_3/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 4. Multi-pool Swaps</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/factory-contract/" class="">Factory Contract</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/path/" class="">Swap Path</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/multi-pool-swaps/" class="">Multi-pool Swaps</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_4/tick-rounding/" class="">Tick Rounding</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 5. Fees and Price Oracle</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/swap-fees/" class="">Swap Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/flash-loan-fees/" class="">Flash Loan Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/protocol-fees/" class="">Protocol Fees</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/price-oracle/" class="">Price Oracle</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_5/user-interface/" class="">User Interface</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Milestone 6: NFT positions</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/introduction/" class="">Introduction</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/erc721-overview/" class="">ERC721 Overview</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-manager/" class="">NFT Manager</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/milestone_6/nft-renderer/" class="">NFT Renderer</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>补充资料</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://uniswapv3book.com/docs/reference/dictionary/" class="">中英名词对照</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="https://uniswapv3book.com/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>报价合约</strong>
+
+  <label for="toc-control">
+    
+    <img src="https://uniswapv3book.com/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#报价合约">报价合约</a>
+      <ul>
+        <li><a href="#回顾">回顾</a></li>
+        <li><a href="#quoter的限制">Quoter的限制</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="报价合约">
+  报价合约
+  <a class="anchor" href="#%e6%8a%a5%e4%bb%b7%e5%90%88%e7%ba%a6">#</a>
+</h1>
+<p>为了让我们的池子合约能够集成到前端，我们需要一种方式能够在交易之前就计算出对应的数量。用户会输入它们希望卖出的token数量，然后就能计算并且展示出它们会获得的token数量。我们将通过报价合约来实现这一功能。</p>
+<p>由于Uniswap V3中的流动性是分散在多个价格区间中的，我们不能够仅仅通过一个公式计算出对应数量（像在Uniswap V2中那样）。Uniswap V3的设计需要我们用一种不同的方法：为了获得交易数量，我们初始化一个真正的交易，并且在callback函数中打断它，获取到之前计算出的对应数量。也就是，我们将会模拟一笔真实的交易来计算输出数量！</p>
+<p>我们会创建这样一个辅助合约：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">contract</span> <span style="color:#a6e22e">UniswapV3Quoter</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">QuoteParams</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span> pool;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint256</span> amountIn;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">bool</span> zeroForOne;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">quote</span>(QuoteParams <span style="color:#66d9ef">memory</span> params)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">public</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">returns</span> (
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">uint256</span> amountOut,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">uint160</span> sqrtPriceX96After,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int24</span> tickAfter
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        ...
+</span></span></code></pre></div><p>Quoter 合约仅实现了一个public的函数——<code>quote</code>。Quoter是一个对于所有池子的通用合约，因此它将池子地址作为一个参数。其他参数（<code>amountIn</code> 和 <code>zeroForOne</code>）都是模拟swap需要的参数。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">try</span>
+</span></span><span style="display:flex;"><span>    IUniswapV3Pool(params.pool).swap(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">address</span>(this),
+</span></span><span style="display:flex;"><span>        params.zeroForOne,
+</span></span><span style="display:flex;"><span>        params.amountIn,
+</span></span><span style="display:flex;"><span>        abi.encode(params.pool)
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>{} <span style="color:#66d9ef">catch</span> (<span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> reason) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> abi.decode(reason, (<span style="color:#66d9ef">uint256</span>, <span style="color:#66d9ef">uint160</span>, <span style="color:#66d9ef">int24</span>));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这个函数唯一实现的功能是调用池子合约的 <code>swap</code> 函数。这个调用应当revert（即抛出异常）——我们将会在callback中实现这一点。当revert发生的时候，对应的reason会解码并且返回。<code>quote</code>永远不会revert。注意到，在data字段，我们仅仅传入和合约的地址——因为在callback函数中，我们需要用它来获取对应池子的<code>slot0</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">uniswapV3SwapCallback</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int256</span> amount0Delta,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int256</span> amount1Delta,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">bytes</span> <span style="color:#66d9ef">memory</span> data
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">external</span> <span style="color:#66d9ef">view</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">address</span> pool <span style="color:#f92672">=</span> abi.decode(data, (<span style="color:#66d9ef">address</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint256</span> amountOut <span style="color:#f92672">=</span> amount0Delta <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">?</span> <span style="color:#66d9ef">uint256</span>(<span style="color:#f92672">-</span>amount1Delta)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">:</span> <span style="color:#66d9ef">uint256</span>(<span style="color:#f92672">-</span>amount0Delta);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    (<span style="color:#66d9ef">uint160</span> sqrtPriceX96After, <span style="color:#66d9ef">int24</span> tickAfter) <span style="color:#f92672">=</span> IUniswapV3Pool(pool)
+</span></span><span style="display:flex;"><span>        .slot0();
+</span></span></code></pre></div><p>在swap的callback中，我们收集我们想要的值：输出数量，新的价格以及对应的tick。接下来，我们将会把这些值保存下来并且revert：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-solidity" data-lang="solidity"><span style="display:flex;"><span><span style="color:#66d9ef">assembly</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">let</span> ptr <span style="color:#f92672">:=</span> <span style="color:#a6e22e">mload</span>(<span style="color:#ae81ff">0x40</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">mstore</span>(ptr, amountOut)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">mstore</span>(<span style="color:#a6e22e">add</span>(ptr, <span style="color:#ae81ff">0x20</span>), sqrtPriceX96After)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">mstore</span>(<span style="color:#a6e22e">add</span>(ptr, <span style="color:#ae81ff">0x40</span>), tickAfter)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">revert</span>(ptr, <span style="color:#ae81ff">96</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>为了节约gas，这部分使用<a href="https://docs.soliditylang.org/en/latest/assembly.html">Yul</a>来实现，这是一个在Solidity内部写内联汇编的语言。让我们来逐句分析一下：</p>
+<ol>
+<li><code>mload(0x40)</code> 读取下一个可用memory slot的指针（EVM中的memory组织成32字节的slot形式）；</li>
+<li>在这个memory slot，<code>mstore(ptr, amountOut)</code> 写入 <code>amountOut</code> 。</li>
+<li><code>mstore(add(ptr, 0x20), sqrtPriceX96After)</code> 在 <code>amountOut</code> 后面写入 <code>sqrtPriceX96After</code>。</li>
+<li><code>mstore(add(ptr, 0x40), tickAfter)</code> 在 <code>sqrtPriceX96After</code> 后面写入 <code>tickAfter</code>。</li>
+<li><code>revert(ptr, 96)</code> 会revert这个调用，并且返回ptr指向位置的96字节数据。</li>
+</ol>
+<p>所以，我们实际上就是把我们需要的值的字节表示连接起来（也就是<code>abi.encode()</code>做的事）。注意到偏移永远是32字节，即使 <code>sqrtPriceX96After</code> 大小只有20字节(<code>uint160</code>)，<code>tickAfter</code> 大小只有3字节(<code>uint24</code>)。这也是为什么我们能够使用 <code>abi.decode()</code> 来解码数据：因为 <code>abi.encode()</code> 就是把所有的数编码成32字节。</p>
+<p>这样就完成了~</p>
+<h2 id="回顾">
+  回顾
+  <a class="anchor" href="#%e5%9b%9e%e9%a1%be">#</a>
+</h2>
+<p>我们来回顾一下以便于更好地理解这个算法：</p>
+<ol>
+<li><code>quote</code> 调用一个池子的 <code>swap</code> 函数，参数是输入的token数量和交易方向。</li>
+<li><code>swap</code> 进行一个真正的交易，运行一个循环来填满用户需要的数量。</li>
+<li>为了从用户那里获得token，<code>swap</code> 会调用caller 的 callback 函数。</li>
+<li>调用者（报价合约）实现了callback，在其中它 revert 并且附带了输出数量、新的价格、新的tick这些信息。</li>
+<li>revert 一直向上传播到最初的 <code>quote</code> 调用</li>
+<li>在 <code>quote</code> 中，这个 revert 被捕获，reason 被解码并作为了 <code>quote</code> 调用的返回值。</li>
+</ol>
+<p>希望上面的解释能让你对这个流程更加清晰！</p>
+<h2 id="quoter的限制">
+  Quoter的限制
+  <a class="anchor" href="#quoter%e7%9a%84%e9%99%90%e5%88%b6">#</a>
+</h2>
+<p>这样的设计有一个非常明显的限制之处：由于 <code>quote</code> 调用了池子合约的 <code>swap</code> 函数，而 <code>swap</code> 函数既不是 pure 的也不是 view 的（因为它修改了合约状态），<code>quoter</code> 也同样不能成为一个 pure 或者 view 的函数，即使它永远都不会修改合约的状态。但是，我们却能够把 <code>quote</code> 作为一个 <code>getter</code> 函数来使用，仅仅读取合约的数据而没有写。这样的不同之处意味着，EVM会使用 <a href="https://www.evm.codes/#f1">CALL</a> opcode 而不是 <a href="https://www.evm.codes/#fa">CALLSTATIC</a>。这不算是一个太大的问题，因为 Quoter 总会 revert，并且revert会重置调用中修改的一切合约状态——这保证了 <code>quote</code> 并不会修改池子合约的任何状态（也即没有实际的交易发生）。</p>
+<p>另一个有些不同的点在于，当我们使用某个库调用 <code>quote</code> 函数时通常会触发一个交易。为了解决这个问题，我们需要强制这个库使用 static call。我们将会在下一小节中看到我们如何在 Ethers.js 中实现这一点。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#报价合约">报价合约</a>
+      <ul>
+        <li><a href="#回顾">回顾</a></li>
+        <li><a href="#quoter的限制">Quoter的限制</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
