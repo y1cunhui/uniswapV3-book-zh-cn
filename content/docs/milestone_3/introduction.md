@@ -1,5 +1,5 @@
 ---
-title: "Introduction"
+title: "简介"
 weight: 1
 # bookFlatSection: false
 # bookToc: true
@@ -9,25 +9,25 @@ weight: 1
 # bookSearchExclude: false
 ---
 
-# Cross-tick Swaps
+# 跨tick交易
 
-We have made a great progress so far and our Uniswap V3 implementation is quite close to the original one! However, our
-implementation only supports swaps within a price range–and this is what we're going to improve in this milestone.
+我们现在已经完成了Uniswap V3实现的很大一部分，并且已经很接近原版了！然而，我们的实现仅仅支持在同一个价格区间内的交易——这也是我们在这一个milestone中来改进的点。
 
-In this milestone, we'll:
-1. update `mint` function to provide liquidity in different price ranges;
-1. update `swap` function to cross price ranges when there's not enough liquidity in the current price range;
-1. learn how to calculate liquidity in smart contracts;
-1. implement slippage protection in `mint` and `swap` functions;
-1. update the UI application to allow to add liquidity at different price ranges;
-1. learn a little bit more about fixed-point numbers.
+在这个milestone中，我们会：
+1. 更新`mint`函数，使得能够在不同的价格区间提供流动性
+2. 更新`swap`函数，使得在当前价格区间流动性不足时能够跨价格区间交易
+3. 学习如何在智能合约中计算流动性
+4. 在`mint`和`swap`函数中实现花店控制
+5. 更新前端用户界面，使得能够在不同价格区间添加流动性
+6. 增加对于定点数运算的一些了解
 
-In this milestone, we'll complete swapping, the core functionality of Uniswap!
+在这个milestone中，我们将彻底完成swap这个Uniswap中最核心的功能！
 
-Let's begin!
+让我们开始吧。
 
-> You'll find the complete code of this chapter in [this Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_3).
->
-> This milestone introduces a lot of code changes in existing contracts. [Here you can see all changes since the last milestone](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_2...milestone_3)
+> 本章的完整代码可以参考[这个Github分支](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_3)
 
-> If you have any questions feel free asking them in [the GitHub Discussion of this milestone](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-3-cross-tick-swaps)!
+> 这个milestone也对于已有的合约做了许多修改，[你可以在这里看到在上一个milestone基础上进行的改动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_2...milestone_3)
+
+> 如果你关于本章有任何问题，欢迎[在本章的Github Discussion](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-3-cross-tick-swaps)提问和交流！
+
