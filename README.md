@@ -85,6 +85,14 @@ https://uniswapv3book.com/
    7. [x] quoter-contract
    8. [x] user-interface
 5. [ ] milestone_3
+   1. [x] introduction
+   2. [ ] different-price-ranges
+   3. [ ] cross-tick swaps
+   4. [ ] slippage protection
+   5. [ ] liquidity protection
+   6. [ ] more-on-fixed point
+   7. [ ] flash loans
+   8. [ ] user interface
 6. [ ] milestone_4
 7. [ ] milestone_5
 8. [ ] milestone_6
