@@ -87,7 +87,7 @@ https://uniswapv3book.com/
 5. [ ] milestone_3
    1. [x] introduction
    2. [x] different-price-ranges
-   3. [ ] cross-tick swaps
+   3. [x] cross-tick swaps
    4. [ ] slippage protection
    5. [ ] liquidity protection
    6. [ ] more-on-fixed point
