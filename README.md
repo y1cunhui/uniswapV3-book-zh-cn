@@ -88,7 +88,7 @@ https://uniswapv3book.com/
    1. [x] introduction
    2. [x] different-price-ranges
    3. [x] cross-tick swaps
-   4. [ ] slippage protection
+   4. [x] slippage protection
    5. [ ] liquidity protection
    6. [ ] more-on-fixed point
    7. [ ] flash loans
