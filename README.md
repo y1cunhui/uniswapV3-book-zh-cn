@@ -92,7 +92,7 @@ https://uniswapv3book.com/
    5. [x] liquidity protection
    6. [x] more-on-fixed point
    7. [x] flash loans
-   8. [ ] user interface
+   8. [x] user interface
 6. [ ] milestone_4
 7. [ ] milestone_5
 8. [ ] milestone_6
