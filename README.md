@@ -102,4 +102,4 @@ https://uniswapv3book.com/
    6. [ ] tick-rounding
 7. [ ] milestone_5
 8. [ ] milestone_6
-9.  [ ] proofreading
+9. [ ] proofreading
