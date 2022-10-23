@@ -1,5 +1,5 @@
 ---
-title: "Introduction"
+title: "简介"
 weight: 1
 # bookFlatSection: false
 # bookToc: true
@@ -9,30 +9,24 @@ weight: 1
 # bookSearchExclude: false
 ---
 
-# Multi-pool Swaps
+# 跨池子交易
 
-After implementing cross-tick swaps, we've got really close to real Uniswap V3 swaps. One significant limitation of our
-implementation is that it allows only swaps within a pool–if there's no pool for a pair of tokens, then swapping between
-these tokens is not possible. This is not so in Uniswap since it allows multi-pool swaps. In this chapter, we're going
-to add multi-pool swaps to our implementation.
+在实现了跨tick交易之后，我们已经十分接近真实的Uniswap V3 交易了。我们的实现中一个非常重要的限制在于，仅仅允许在同一个池子里的交易——如果某一对 token 没有池子，我们就不能在这两个 token 之间进行交易。在Uniswap中并不是如此，因为它允许跨池子交易。在这章中，我们将在我们的实现中添加跨池子交易的功能。
 
-Here's the plan:
+计划如下：
+1. 首先，我们将学习并实现工厂合约
+2. 接下来，我们将探究链式交易，或者叫做跨池子交易如何工作，并实现 Path 库
+3. 接下来，我们会更新前端来支持跨池子交易
+4. 我们将会实现一个基本的路由，来寻找到两个 token 之间的路径
+5. 在上述过程中，我们也会学到关于 tick spacing 的知识，一种优化交易的方式。
 
-1. first, we'll learn about and implement Factory contract;
-1. then, we'll see how chained or multi-pool swaps work and implement Path library;
-1. then, we'll update the front-end app to support multi-pool swaps;
-1. we'll implement a basic router that finds a path between two tokens;
-1. along the way, we'll also learn about tick spacing which is a way of optimizing swaps.
+在完成本章后，我们的实现将能够处理跨池子的交易，例如，通过不同的稳定币来进行 WBTC 和 WETH 的交易：WETH → USDC → USDT → WBTC。
 
+让我们开始吧！
 
-After finishing this chapter, our implementation will be able to handle multi-pool swaps, for example, swapping WBTC for
-WETH via different stablecoins: WETH → USDC → USDT → WBTC.
+> 你可以在[这个 Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_4) 找到本章完整代码.
 
-Let's begin!
+> 本 milestone 对已有的合约做出了大量改动。 [在这里可以看到相比于上一个 milestone 所有的代码变动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_3...milestone_4)
 
+> 如果你有任何问题，欢迎在[本 milestone 的 Github Discussion 中提问和交流](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-4-multi-pool-swaps)!
 
-> You'll find the complete code of this chapter in [this Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_4).
->
-> This milestone introduces a lot of code changes in existing contracts. [Here you can see all changes since the last milestone](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_3...milestone_4)
-
-> If you have any questions feel free asking them in [the GitHub Discussion of this milestone](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-4-multi-pool-swaps)!

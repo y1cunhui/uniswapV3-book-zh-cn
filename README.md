@@ -94,6 +94,12 @@ https://uniswapv3book.com/
    7. [x] flash loans
    8. [x] user interface
 6. [ ] milestone_4
+   1. [x] introduction
+   2. [ ] factory-contract
+   3. [ ] swap-path
+   4. [ ] multi-pool-swap
+   5. [ ] user-interface
+   6. [ ] tick-rounding
 7. [ ] milestone_5
 8. [ ] milestone_6
 9.  [ ] proofreading
