@@ -99,7 +99,7 @@ https://uniswapv3book.com/
    3. [x] swap-path
    4. [x] multi-pool-swap
    5. [x] user-interface
-   6. [ ] tick-rounding
+   6. [x] tick-rounding
 7. [ ] milestone_5
 8. [ ] milestone_6
 9. [ ] proofreading

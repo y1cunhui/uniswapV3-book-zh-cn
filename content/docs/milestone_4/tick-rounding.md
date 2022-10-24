@@ -1,5 +1,5 @@
 ---
-title: "Tick Rounding"
+title: "Tick 舍入"
 weight: 6
 # bookFlatSection: false
 # bookToc: true
@@ -11,16 +11,14 @@ weight: 6
 
 {{< katex display >}} {{</ katex >}}
 
-# Tick Rounding
+# Tick 舍入
 
-Let's review some other changes we need to make to support different tick spacings.
+我们来看一下，为了支持不同的 tick 间隔，我们还需进行哪些改动。
 
-Tick spacing greater than 1 won't allow users to select arbitrary price ranges: tick indexes must be multiples of a tick
-spacing. For example, for tick spacing 60 we can have ticks: 0, 60, 120, 180, etc. Thus, when user picks a range, we need
-to "round" it so its boundaries are multiples of pool's tick spacing.
+大于1的 tick 间隔将不允许用户选择任意的价格区间：区间的 tick index 必须是 tick 间隔的整数倍。例如，当 tick 间隔为 60 时，我们选择的 tick 可以是：0，60，120，180等等。因此，当用户选择某个区间是，我们需要将其舍入到最近的，满足 tick 间隔整数倍的区间中。
 
-## `nearestUsableTick` in JavaScript
-In [the Uniswap V3 SDK](https://github.com/Uniswap/v3-sdk), the function that does that is called [nearestUsableTick](https://github.com/Uniswap/v3-sdk/blob/b6cd73a71f8f8ec6c40c130564d3aff12c38e693/src/utils/nearestUsableTick.ts):
+## JavaScript 中的 `nearestUsableTick`
+在 [the Uniswap V3 SDK](https://github.com/Uniswap/v3-sdk)中， 实现这个功能的函数叫做 [nearestUsableTick](https://github.com/Uniswap/v3-sdk/blob/b6cd73a71f8f8ec6c40c130564d3aff12c38e693/src/utils/nearestUsableTick.ts):
 ```javascript
 /**
  * Returns the closest tick that is nearest a given tick and usable for the given tick spacing
@@ -38,16 +36,14 @@ export function nearestUsableTick(tick: number, tickSpacing: number) {
 }
 ```
 
-At its core, it's just:
+其核心仅仅是下面这句：
 ```javascript
 Math.round(tick / tickSpacing) * tickSpacing
 ```
 
-Where `Math.round` is rounding to the nearest integer: when the fractional part is less than 0.5, it rounds to the lower
-integer; when it's greater than 0.5 it rounds to the greater integer; and when it's 0.5, it rounds to the greater integer
-as well.
+`Math.round` 就是四舍五入到最近整数。
 
-So, in the web app, we'll use `nearestUsableTick` when building `mint` parameters:
+所以，在前端中，构造 `mint` 参数时我们将使用 `nearestUsableTick`：
 ```javascript
 const mintParams = {
   tokenA: pair.token0.address,
@@ -59,18 +55,13 @@ const mintParams = {
 }
 ```
 
-> In reality, it should be called whenever user adjusts a price range because we want the user to see the actual price
-that will be created. In our simplified app, we do it less user-friendly.
+> 在实际中，当用户每次调整价格区间的时候它都会被调用，以便于用户看到将会实际创建的价格位置。在我们的简化版实现中，我们并没有做到如此的用户友好。
 
-However, we also want to have a similar function in Solidity tests, but neither of the math libraries we're using
-implements it.
+我们也会在我们的 Solidity 测试中想要用到这样的函数，但是我们用到的所有数学库都没有实现这个功能。
 
-## `nearestUsableTick` in Solidity
+## Solidity 中的 `nearestUsableTick`
 
-In our smart contract tests, we need a way to round ticks and convert rounded prices to sqrtP. In a previous chapter, we
-chose to use [ABDKMath64x64](https://github.com/abdk-consulting/abdk-libraries-solidity) to handle fixed-point numbers
-math in tests. The library, however, doesn't implement the rounding function we need to port `nearestUsableTick`, so
-we'll need to implement it ourselves:
+在我们的合约测试中，我们也需要一种方式来对于 tick 进行舍入以及把舍入后的价格转换成 $\sqrt{P}$。在前一章中，我们使用了 [ABDKMath64x64](https://github.com/abdk-consulting/abdk-libraries-solidity) 来处理测试中定点数的运算。然而这个库没有实现我们希望对标 `nearestUsableTick` 的函数，所以我们需要自己实现：
 
 ```solidity
 function divRound(int128 x, int128 y)
@@ -88,14 +79,13 @@ function divRound(int128 x, int128 y)
 }
 ```
 
-The function does multiple things:
-1. it divides two Q64.64 numbers;
-1. it then rounds the result to the decimal one (`result = quot >> 64`), the fractional part is lost at this point (i.e. the result is rounded down);
-1. it then divides the quotient by $2^{64}$, takes the remainder, and compares it with `0x8000000000000000` (which is 0.5 in Q64.64);
-1. if the remainder is greater or equal to 0.5, it rounds the result to the greater integer.
+这个函数做了这些事情：
+1. 对两个 Q64.64 的数做除法；
+2. 把结果舍入到十进制整数（`result = quot >> 64`），分数部分被扔掉（向下舍入）；
+3. 商除以 $2^{64}$，取余数，并与 `0x8000000000000000` (Q64.64 里的 0.5) 比较；
+4. 如果余数大于等于 0.5，把结果向上舍入。
 
-What we get is an integer rounded according to the rules of `Math.round` from JavaScript. We can then re-implement
-`nearestUsableTick`:
+这样得到了一个相当于 JavaScript 中 `Math.round` 的函数，我们就可以实现 `nearestUsableTick` 了：
 
 ```solidity
 function nearestUsableTick(int24 tick_, uint24 tickSpacing)
@@ -115,4 +105,4 @@ function nearestUsableTick(int24 tick_, uint24 tickSpacing)
 }
 ```
 
-That's it!
+完成了！
