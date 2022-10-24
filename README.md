@@ -96,7 +96,7 @@ https://uniswapv3book.com/
 6. [ ] milestone_4
    1. [x] introduction
    2. [x] factory-contract
-   3. [ ] swap-path
+   3. [x] swap-path
    4. [ ] multi-pool-swap
    5. [ ] user-interface
    6. [ ] tick-rounding

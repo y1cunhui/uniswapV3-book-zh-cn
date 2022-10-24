@@ -1,5 +1,5 @@
 ---
-title: "Swap Path"
+title: "交易路径"
 weight: 3
 # bookFlatSection: false
 # bookToc: true
@@ -9,58 +9,51 @@ weight: 3
 # bookSearchExclude: false
 ---
 
-# Swap Path
+# 交易路径
 
-Let's imagine that we have only these pools: WETH/USDC, USDC/USDT, WBTC/USDT. If we want to swap WETH for WBTC, we'll
-need to make multiple swaps (WETH→USDC→USDT→WBTC) since there's no WETH/WBTC pool. We can do this manually or we can
-improve our contracts to handle such chained, or multi-pool, swaps. Of course, we'll do the latter!
+假设我们只有以下几个池子：WETH/USDC, USDC/USDT, WBTC/USDT。如果我们想要把WETH 换成 WBTC，我们需要进行多步交换（WETH→USDC→USDT→WBTC），因为没有直接的WETH/WBTC 池子。我们可以手动进行这一步，或者我们可以改进我们的合约来支持这样链式的，或者叫跨池子的交易。当然，我们要选择后者！
 
-When doing multi-pool swaps, we're sending output of a previous swap to the input of the next one. For example:
+当进行跨池子交易时，我们会把上一笔交易的输出作为下一笔交易的输入。例如：
+1. 在 WETH/USDC 池子，我们卖出 WETH 买入 USDC；
+2. 在 USDC/USDT 池子，我们卖出前一笔交易得到的 USDC 买入 USDT；
+3. 在 WBTC/USDT 池子，我们卖出前一笔交易得到的 USDT 买入 WBTC。
 
-1. in WETH/USDC pool, we're selling WETH and buying USDC;
-1. in USDC/USDT pool, we're selling USDC from the previous swap and buying USDT;
-1. in WBTC/USDT pool, we're selling USDT from the previous pool and buying WBTC.
-
-We can turn this series into a path:
+我们可以把这样一个序列转换成如下路径：
 
 ```
 WETH/USDC,USDC/USDT,WBTC/USDT
 ```
 
-And iterate over such path in our contracts to perform multiple swaps in one transaction. However, recall from the previous
-chapter that we don't need to know pool addresses and, instead, we can derive them from pool parameters. Thus, the above
-swap can be turned into a series of tokens:
+并在合约中沿着这个路径进行遍历来在同一笔交易中实现多笔交易。然而，回顾一下在前一小节中我们提到我们不再需要知道池子地址，而可以通过池子参数计算出地址。因此，上述的路径可以被转换成一系列的 token：
 
 ```
 WETH, USDC, USDT, WBTC
 ```
 
-And recall that tick spacing is another parameter (besides tokens) that identifies a pool. Thus, the above path becomes:
+并且由于 tick 间隔也是一个标识池子的参数，我们也需要把它包含在路径里：
 
 ```
 WETH, 60, USDC, 10, USDT, 60, WBTC
 ```
 
-Where 60 and 10 are tick spacings. We're using 60 in volatile pairs (e.g. ETH/USDC, WBTC/USDT) and 10 in stablecoin
-pairs (USDC/USDT).
+其中的 60 和 10 都是 tick 间隔。我们在波动性较大的池子（例如 ETH/USDC, WBTC, USDT）中使用 60 的间隔，在稳定币池子中（例如 USDC/USDT）使用 10 的间隔。
 
-Now, having such path, we can iterate over it to build pool parameters for each of the pool:
+现在，有了这样的路径，我们可以遍历这条路径来获取每个池子的参数：
 
 1. `WETH, 60, USDC`;
-1. `USDC, 10, USDT`;
-1. `USDT, 60, WBTC`.
+2. `USDC, 10, USDT`;
+3. `USDT, 60, WBTC`.
 
-Knowing these parameters, we can derive pool addresses using `PoolAddress.computeAddress`, which we implemented in the
-previous chapter.
+知道了这些参数，我们可以使用我们前一章实现的 `PoolAddress.computeAddress` 来算出池子地址。
 
-> We also can use this concept when doing swaps within one pool: the path would simple contain the parameters of one
-pool. And, thus, we can use swap paths in all swaps, universally.
+> 在一个池子内交易的时候我们也可以使用这个概念：路径仅包含一个池子的参数。因此，交易路径可以适用于所有类型的交易。
 
-Let's build a library to work with swap paths.
+让我们搭建一个库来进行路径相关操作。
 
-## Path Library
+## Path 库
 
-In code, a swap path is a sequence of bytes. In Solidity, a path can be built like that:
+在代码中，一个交易路径是一个字节序列。在 Solidity 中，一个路径可以这样构建：
+
 ```solidity
 bytes.concat(
     bytes20(address(weth)),
@@ -73,7 +66,7 @@ bytes.concat(
 );
 ```
 
-And it looks like that:
+它长这样：
 ```shell
 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 # weth address
   00003c                                   # 60
@@ -84,15 +77,17 @@ And it looks like that:
   2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599 # wbtc address
 ```
 
-These are the functions that we'll need to implement:
-1. calculating the number of pools in a path;
-1. figuring out if a path has multiple tokens;
-1. extracting first pool parameters from a path;
-1. proceeding to the next pair in a path;
-1. and decoding first pool parameters.
+以下是我们需要实现的函数：
+1. 计算路径中池子的数量；
+2. 看一个路径是否包含多个池子；
+3. 提取路径中第一个池子的参数；
+4. 进入路径中的下一个 token 对；
+5. 解码池子参数
 
-### Calculating the Number of Pools in a Path
-Let's begin with calculating the number of pools in a path:
+### 计算路径中池子的数量
+
+让我们首先实现计算路径中池子的数量：
+
 ```solidity
 // src/lib/Path.sol
 library Path {
@@ -112,16 +107,15 @@ library Path {
     ...
 ```
 
-We first define a few constants:
-1. `ADDR_SIZE` is the size of an address, 20 bytes;
-1. `TICKSPACING_SIZE` is the size of a tick spacing, 3 bytes (`uint24`);
-1. `NEXT_OFFSET` is the offset of a next token address–to get it, we skip an address and a tick spacing;
-1. `POP_OFFSET` is the offset of a pool key (token address + tick spacing + token address);
-1. `MULTIPLE_POOLS_MIN_LENGTH` is the length of a path that contains 2 or more pools (one set of pool parameters + tick
-spacing + token address).
+我们首先定义一系列常量：
+1. `ADDR_SIZE` 是地址的大小，20字节；
+2. `TICKSPACING_SIZE` 是 tick 间隔的大小，3字节（`uint24`）；
+3. `NEXT_OFFSET` 是到下一个 token 地址的偏移——为了获取这个地址，我们要跳过当前地址和 tick 间隔；
+4. `POP_OFFSET` 是编码的池子参数的偏移 (token address + tick spacing + token address);
+5. `MULTIPLE_POOLS_MIN_LENGTH` 是包含两个或以上池子的路径长度 (一个池子的参数 + tick
+spacing + token address 的集合)。
 
-To count the number of pools in a path, we subtract the size of an address (first or last token in a path) and divide
-the remaining part by `NEXT_OFFSET` (address + tick spacing):
+为了计算路径中的池子数量，我们减去一个地址的大小（路径中的第一个或最后一个 token）并且用剩下的值除以 `NEXT_OFFSET` 即可：
 
 ```solidity
 function numPools(bytes memory path) internal pure returns (uint256) {
@@ -129,8 +123,8 @@ function numPools(bytes memory path) internal pure returns (uint256) {
 }
 ```
 
-### Figuring Out If a Path Has Multiple Tokens
-To check if there are multiple pools in a path, we need to compare the length of a path with `MULTIPLE_POOLS_MIN_LENGTH`:
+### 判断一个路径是否有多个池子
+为了判断一个路径中是否有多个池子，我们只需要将路径长度与 `MULTIPLE_POOLS_MIN_LENGTH` 比较即可：
 
 ```solidity
 function hasMultiplePools(bytes memory path) internal pure returns (bool) {
@@ -138,14 +132,12 @@ function hasMultiplePools(bytes memory path) internal pure returns (bool) {
 }
 ```
 
-### Extracting First Pool Parameters From a Path
+### 提取路径中第一个池子的参数
 
-To implement the other functions, we'll need a helper library because Solidity doesn't have native bytes manipulation
-functions. Specifically, we'll need a function to extract a sub-array from an array of bytes, and a couple of functions
-to convert bytes to `address` and `uint24`.
+为了实现其他的函数，我们需要一个辅助的库，因为 Solidity 没有原生的 bytes 操作函数。我们需要能够从一个字节数组中提取出一个子数组的函数，以及将 `address` 和 `uint24` 转换成字节的函数。
 
-Luckily, there's a great open-source library called [solidity-bytes-utils](https://github.com/GNSPS/solidity-bytes-utils).
-To use the library, we need to extend the `bytes` type in the `Path` library:
+幸运的是，已经有一个叫做 [solidity-bytes-utils](https://github.com/GNSPS/solidity-bytes-utils) 的开源库实现了这些。为了使用这个库，我们需要扩展 Path 库里面的 bytes 类型：
+
 ```solidity
 library Path {
     using BytesLib for bytes;
@@ -153,7 +145,8 @@ library Path {
 }
 ```
 
-We can implement `getFirstPool` now:
+现在我们可以实现 `getFirstPool` 了：
+
 ```solidity
 function getFirstPool(bytes memory path)
     internal
@@ -164,14 +157,11 @@ function getFirstPool(bytes memory path)
 }
 ```
 
-The function simply returns the first "token address + tick spacing + token address" segment encoded as bytes.
+这个函数仅仅返回了 "token address + tick spacing + token address" 这一段字节。
 
-### Proceeding to a Next Pair in a Path
+### 前往路径中下一个 token 对
 
-
-We'll use the next function when iterating over a path and throwing away processed pools. Notice that we're removing
-"token address + tick spacing", not full pool parameters, because we need the other token address to calculate next pool
-address.
+我们将会在遍历路径的时候使用下面这个函数，来扔掉已经处理过的池子。注意到我们移除的是"token address + tick spacing"，而不是完整的池子参数，因为我们还需要另一个 token 地址来计算下一个池子的地址。
 
 ```solidity
 function skipToken(bytes memory path) internal pure returns (bytes memory) {
@@ -179,9 +169,9 @@ function skipToken(bytes memory path) internal pure returns (bytes memory) {
 }
 ```
 
-### Decoding First Pool Parameters
+### 解码第一个池子的参数
 
-And, finally, we need to decode the parameters of the first pool in a path:
+最后，我们需要解码路径中第一个池子的参数：
 
 ```solidity
 function decodeFirstPool(bytes memory path)
@@ -199,8 +189,8 @@ function decodeFirstPool(bytes memory path)
 }
 ```
 
-Unfortunately, `BytesLib` doesn't implement `toUint24` function but we can implement it ourselves! `BytesLib` has multiple
-`toUintXX` functions, so we can take one of them and convert to a `uint24` one:
+遗憾的是，`BytesLib` 没有实现 `toUint24` 这个函数，但我们可以自己实现它！在 `BytesLib`  中有很多 `toUintXX` 这样的函数，我们可以把其中一个转换成 `uint24` 类型的：
+
 ```solidity
 library BytesLibExt {
     function toUint24(bytes memory _bytes, uint256 _start)
@@ -220,7 +210,7 @@ library BytesLibExt {
 }
 ```
 
-We're doing this in a new library contract, which we can then use in our Path library alongside `BytesLib`:
+我们是在一个新的库合约中实现这个函数，可以直接在 Path 库中使用它：
 
 ```solidity
 library Path {
