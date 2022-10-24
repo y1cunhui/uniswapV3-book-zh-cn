@@ -93,7 +93,7 @@ https://uniswapv3book.com/
    6. [x] more-on-fixed point
    7. [x] flash loans
    8. [x] user interface
-6. [ ] milestone_4
+6. [x] milestone_4
    1. [x] introduction
    2. [x] factory-contract
    3. [x] swap-path
