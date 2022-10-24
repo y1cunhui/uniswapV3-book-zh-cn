@@ -95,7 +95,7 @@ https://uniswapv3book.com/
    8. [x] user interface
 6. [ ] milestone_4
    1. [x] introduction
-   2. [ ] factory-contract
+   2. [x] factory-contract
    3. [ ] swap-path
    4. [ ] multi-pool-swap
    5. [ ] user-interface
