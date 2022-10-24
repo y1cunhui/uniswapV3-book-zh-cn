@@ -97,7 +97,7 @@ https://uniswapv3book.com/
    1. [x] introduction
    2. [x] factory-contract
    3. [x] swap-path
-   4. [x] multi-pool-swap
+   4. [ ] multi-pool-swap
    5. [ ] user-interface
    6. [ ] tick-rounding
 7. [ ] milestone_5
