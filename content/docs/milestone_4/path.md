@@ -11,9 +11,9 @@ weight: 3
 
 # 交易路径
 
-假设我们只有以下几个池子：WETH/USDC, USDC/USDT, WBTC/USDT。如果我们想要把WETH 换成 WBTC，我们需要进行多步交换（WETH→USDC→USDT→WBTC），因为没有直接的WETH/WBTC 池子。我们可以手动进行这一步，或者我们可以改进我们的合约来支持这样链式的，或者叫跨池子的交易。当然，我们要选择后者！
+假设我们只有以下几个池子：WETH/USDC, USDC/USDT, WBTC/USDT。如果我们想要把WETH 换成 WBTC，我们需要进行多步交换（WETH→USDC→USDT→WBTC），因为没有直接的WETH/WBTC 池子。我们可以手动进行这一步，或者我们可以改进我们的合约来支持这样链式的，或者叫多池子的交易。当然，我们要选择后者！
 
-当进行跨池子交易时，我们会把上一笔交易的输出作为下一笔交易的输入。例如：
+当进行多池子交易时，我们会把上一笔交易的输出作为下一笔交易的输入。例如：
 1. 在 WETH/USDC 池子，我们卖出 WETH 买入 USDC；
 2. 在 USDC/USDT 池子，我们卖出前一笔交易得到的 USDC 买入 USDT；
 3. 在 WBTC/USDT 池子，我们卖出前一笔交易得到的 USDT 买入 WBTC。
