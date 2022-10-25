@@ -1,5 +1,5 @@
 ---
-title: "Introduction"
+title: "简介"
 weight: 1
 # bookFlatSection: false
 # bookToc: true
@@ -9,24 +9,18 @@ weight: 1
 # bookSearchExclude: false
 ---
 
-# Fees and Price Oracle
+# 费率和价格预言机
 
-In this milestone, we're going to add two new features to our Uniswap implementation. They share one similarity: they
-work on top of what we have already built–that's why we've delayed them until this milestone. However, they're not
-equally important.
+在这个 milestone 中，我们会在我们的实现中增加两个新的功能。它们的共同点是：都运行在我们已经搭建好的系统之上——这也是我们为什么直到这里才实现它们。然而，它们重要性并不相同。
 
-We're going to add swap fees and a price oracle:
-- Swap fees is a crucial mechanism of the DEX design we're implementing. They're the glue that makes things stick
-together. Swap fees incentivize liquidity providers to provide liquidity, and no trades are possible without liquidity,
-as we have already learned.
-- A price oracle, on the other hand, is an optional utility function of a DEX. A DEX, while conducting trades, can also
-function as a price oracle–that is, provide token prices to other services. This doesn't affect actual swaps but
-provides a useful service to other on-chain applications.
+我们将要添加交易费率(swap fees)和一个价格预言机(price oracle)：
+- 交易费率是我们实现的 DEX 中一个关键的机制。它能够使一切事情联合起来共同运作。交易费率能够激励 LP 提供流动性，没有流动性就无法进行交易。
+- 一个价格预言机，是 DEX 的一个可选功能。一个 DEX 除了能够执行交易之外，也能够作为一个价格预言机——向其他服务提供 token 的价格。这实际上并不影响我们交易的执行，但是它对于其他链上应用来说是一个很有用的服务。
 
-Alright, let's get building!
+好，让我们来开始搭建吧！
 
-> You'll find the complete code of this chapter in [this Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_5).
->
-> This milestone introduces a lot of code changes in existing contracts. [Here you can see all changes since the last milestone](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_4...milestone_5)
+> 你可以在[这个 Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_5) 找到本章完整代码.
 
-> If you have any questions feel free asking them in [the GitHub Discussion of this milestone](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-5-fees-and-price-oracle)!
+> 本 milestone 对已有的合约做出了大量改动。 [在这里可以看到相比于上一个 milestone 所有的代码变动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_4...milestone_5)
+
+> 如果你有任何问题，欢迎在[本 milestone 的 Github Discussion 中提问和交流](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-5-fees-and-price-oracle)!
