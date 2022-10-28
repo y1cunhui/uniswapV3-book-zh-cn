@@ -101,5 +101,11 @@ https://uniswapv3book.com/
    5. [x] user-interface
    6. [x] tick-rounding
 7. [ ] milestone_5
+   1. [x] introduction
+   2. [ ] swap-fees
+   3. [ ] flash-loan-fees
+   4. [ ] protocol-fees
+   5. [ ] price-oracle
+   6. [ ] user-interface
 8. [ ] milestone_6
 9. [ ] proofreading
