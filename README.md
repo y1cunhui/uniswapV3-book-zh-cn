@@ -103,7 +103,7 @@ https://uniswapv3book.com/
 7. [ ] milestone_5
    1. [x] introduction
    2. [x] swap-fees
-   3. [ ] flash-loan-fees
+   3. [x] flash-loan-fees
    4. [ ] protocol-fees
    5. [ ] price-oracle
    6. [ ] user-interface

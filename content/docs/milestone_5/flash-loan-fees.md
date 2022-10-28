@@ -1,5 +1,5 @@
 ---
-title: "Flash Loan Fees"
+title: "闪电贷费率"
 weight: 3
 # bookFlatSection: false
 # bookToc: true
@@ -9,12 +9,12 @@ weight: 3
 # bookSearchExclude: false
 ---
 
-# Flash Loan Fees
+# 闪电贷费率
 
-In a previous chapter we implemented flash loans and made them free. However, Uniswap collects swap fees on flash loans,
-and we're going to add this to our implementation: the amounts repaid by flash loan borrowers must include a fee.
+在前一个 milestone 中，我们实现了闪电贷，并且它是免费的。然而，Uniswap 会对闪电贷收取一定的交易费用，我们将会在这里把它加入到我们的实现中：闪电贷返还的数量必须包含一个费用。
 
-Here's what the updated `flash` function looks like:
+更新后的 `flash` 函数长这样：
+
 ```solidity
 function flash(
     uint256 amount0,
@@ -45,5 +45,4 @@ function flash(
 }
 ```
 
-What's changed is that we're now calculating fees on the amounts requested by caller and then expect pool balances to
-have grown by the fee amounts.
+改变的点在于，我们现在根据用户请求的 token 数量来收取费用，并且在还款后检查数量增加了小费的数量。
