@@ -1,5 +1,5 @@
 ---
-title: "Protocol Fees"
+title: "协议费率"
 weight: 4
 # bookFlatSection: false
 # bookToc: true
@@ -11,24 +11,17 @@ weight: 4
 
 {{< katex display >}} {{</ katex >}}
 
-# Protocol Fees
+# 协议费率
 
-While working on the Uniswap implementation, you've probably asked yourself, "How does Uniswap make money?" Well, it
-doesn't (at least as of September 2022).
+在实现 Uniswap 的过程中，你可能会有疑问：”Uniswap 怎么挣钱？“。事实上，它并不挣钱（至少到 2022 年 9 月为止还没有）。
 
-In the implementation we've built so far, traders pay liquidity providers for providing liquidity, and Uniswap Labs, as
-the company that developed the DEX, is not part of this process. Neither traders, nor liquidity providers pay Uniswap
-Labs for using the Uniswap DEX. How come?
+在我们已经完成的实现中，交易员会给 LP 支付一定费用，然而 Uniswap Labs，作为这个 DEX 的项目方，并不在这个过程中。交易员和 LP 在使用 Uniswap DEX 的过程中都不会给 Uniswap Labs 支付任何费用。为什么会这样？
 
-In fact, there's a way for Uniswap Labs to start making money on the DEX. However, the mechanism hasn't been enabled yet
-(again, as of September 2022). Each Uniswap pool has *protocol fees* collection mechanism. Protocol fees are collected
-from swap fees: a small portion of swap fees is subtracted and saved as protocol fees to later be collected by Factory
-contract owner (Uniswap Labs). The size of protocol fees is expected to be determined by UNI token holders, but it must
-be between $1/4$ and $1/10$ (inclusive) of swap fees.
+事实上，Uniswap Labs 是有办法从这个 DEX 中盈利的。然而，这个机制直到现在（2022 年 9 月）都还没有启用。每个 Uniswap 池子都有一个*协议费率*的机制。协议费用从交易费用中收取：一小部分的交易费用会被用来作为协议的费用，之后会被工厂合约的所有者（ Uniswap Labs ）提取。协议费率的大小是由 UNI 币的持有者来决定的，但是它必须在交易费率的 $1/4$ 到 $1/10$（包含） 之间。
 
-For brevity, we're not going to add protocol fees to our implementation, but let's see how they're implemented in Uniswap.
+简单起见，我们将不会在我们的实现中添加协议费率。但我们可以看一看在 Uniswap 中它是怎么实现的。
 
-Protocol fee size is stored in `slot0`:
+协议费率大小存储在 `slot0` 中：
 
 ```solidity
 // UniswapV3Pool.sol
@@ -41,7 +34,7 @@ struct Slot0 {
 }
 ```
 
-And a global accumulator is needed to track accrued fees:
+需要一个全局变量来追踪已经获得的协议收入：
 ```solidity
 // accumulated protocol fees in token0/token1 units
 struct ProtocolFees {
@@ -51,7 +44,7 @@ struct ProtocolFees {
 ProtocolFees public override protocolFees;
 ```
 
-Protocol fees are set in the `setFeeProtocol` function:
+协议费率在 `setFeeProtocol` 函数中设置：
 
 ```solidity
 function setFeeProtocol(uint8 feeProtocol0, uint8 feeProtocol1) external override lock onlyFactoryOwner {
@@ -65,14 +58,9 @@ function setFeeProtocol(uint8 feeProtocol0, uint8 feeProtocol1) external overrid
 }
 ```
 
-As you can see, it's allowed to set protocol fees separate for each of the tokens. The values are two `uint8` that are
-packed to be stored in one `uint8`: `feeProtocol1` is shifted to the left by 4 bits (this is identical to multiplying it
-by 16) and added to `feeProtocol0`. To unpack `feeProtocol0`, a remainder of division `slot0.feeProtocol` by 16 is taken;
-`feeProtocol1` is simply integer division of `slot0.feeProtocol`  by 4. Such packing works because neither `feeProtocol0`,
-nor `feeProtocol1` can be greater than 10.
+正如你所见，是可以对于每种 token 收取不同的费率的。这些值包含两个 `uint8`，被打包和存储进一个 `uint8` 里面：`feeProtocol1` 左移4位，并加上 `feeProtocol0`。想要获得 `feeProtocol0`，可以用 `slot0.feeProtocol` 除以 16 取余数。`feeProtocol1` 只需要 `slot0.feeProtocol` 右移4位。能进行这样的打包是因为 `feeProtocol0` 和 `feeProtocol1` 都不会超过10。
 
-Before beginning a swap, we need to choose one of the protocol fees depending on swap direction (swap and protocol fees
-are collected on input tokens):
+在交易之前，我们需要根据交易方向来选择一个协议费率：
 
 ```solidity
 function swap(...) {
@@ -81,7 +69,8 @@ function swap(...) {
     ...
 ```
 
-To accrue protocol fees, we subtract them from swap fees right after computing swap step amounts:
+为了累积协议费用，我们在计算交易中一步的数量之后，把它从交易费用中减去：
+
 
 ```solidity
 ...
@@ -99,7 +88,8 @@ while (...) {
 ...
 ```
 
-After a swap is done, the global protocol fees accumulator needs to be updated:
+在交易结束后，需要更新全局累积的协议费用：
+
 ```solidity
 if (zeroForOne) {
     if (state.protocolFee > 0) protocolFees.token0 += state.protocolFee;
@@ -108,7 +98,7 @@ if (zeroForOne) {
 }
 ```
 
-Finally, Factory contract owner can collect accrued protocol fees by calling `collectProtocol`:
+最后，工厂合约的拥有者可以通过调用 `collectProtocol` 来收集累积的协议费用：
 
 ```solidity
 function collectProtocol(
