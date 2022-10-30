@@ -1,5 +1,5 @@
 ---
-title: "Price Oracle"
+title: "价格预言机"
 weight: 5
 # bookFlatSection: false
 # bookToc: true
@@ -11,87 +11,62 @@ weight: 5
 
 {{< katex display >}} {{</ katex >}}
 
-# Price Oracle
+# 价格预言机
 
-The final mechanism we're going to add to our DEX is a *price oracle*. Even though it's not essential to a DEX (there
-are DEXes that don't implement a price oracle), it's still an important feature of Uniswap and something that's
-interesting to learn about.
+我们要在我们的 DEX 中添加的最后一个机制就是*价格预言机*。即使它不是一个 DEX 必备的部分（有很多 DEX 没有价格预言机），它仍然是 Uniswap 的一个很重要的特性，并且也非常有趣。
 
-## What is Price Oracle?
+## 什么是价格预言机？
 
-Price oracle is a mechanism that provides asset prices to blockchain. Since blockchains are isolated ecosystems, there's
-no direct way of querying external data, e.g. fetching asset prices from centralized exchanges via API. Another, a very
-hard one, problem is data validity and authenticity: when fetching prices from an exchange, how do you know they're real?
-You have to trust the source. But the internet is not often secure and, sometimes, prices can be manipulated, DNS records
-can be hijacked, API servers can go down, etc. All these difficulties need to be addressed so we could have reliable and
-correct on-chain prices.
+价格预言机(Price Oracle)是向区块链提供资产价格的一种机制。由于区块链是一个独立的生态系统，我们没有很直接的方法能够读取到外部数据，例如从中心化交易所(CEX)中通过 API 获取价格。另一个非常重要的问题是数据的有效性和权威性：当你从一个交易所获取数据时，你怎么能确定它是真实的？你必须信任数据来源。但是网络并不总是安全的，并且价格有时候会被操纵，DNS 记录可能被污染，API 服务器可能会宕机等等。所有这些的困难都需要被考虑到，因为我们需要可靠而且正确的链上价格。
 
-One of the first working solution of the above mentioned problems was [Chainlink](https://chain.link/). Chainlink runs
-a decentralized network of oracles that fetch asset prices from centralized exchanges via APIs, average them, and provide
-them on-chain in a tamper-proof way. Basically, Chainlink is a set of contracts with one state variable, asset price,
-that can be read by anyone (any other contract or user) but can be written to only by oracles.
+上述问题最初的解决方法之一是 [Chainlink](https://chain.link/)。Chainlink 运行了一个去中心化的预言机网络，它通过 API 从中心化交易所那里获取资产价格，取平均数，然后用防篡改的方式向链上提供数据。简单来说，Chainlink 有一系列的合约拥有一个状态变量，即资产价格，任何人可以读到这个变量（其他合约或者用户），但它仅能被预言机修改。
 
-This is one way of looking at price oracles. There's another.
+这只是解决价格预言机的一种方式。还有其他的方式。
 
-If we have native on-chain exchanges, why would we need to fetch prices from outside? This is how the Uniswap price oracle
-works. Thanks to arbitraging and high liquidity, asset prices on Uniswap are close to those on centralized exchanges. So,
-instead of using centralized exchanges as the source of truth for asset prices, we can use Uniswap, and we don't need to
-solve the problems related to delivering data on-chain (we also don't need to trust to data providers).
+如果我们已经有了链上原生的交易所，那我们为什么还需要从外界获取价格呢？这正是 Uniswap 价格预言机工作的原理。多亏了高流动性以及套利，Uniswap 中的资产价格与中心化交易所中的价格非常接近。因此，除了使用中心化交易所作为可信的资产价格来源，我们还可以使用 Uniswap，并且我们不再需要考虑关于把数据传输到链上的问题（我们也不需要再信任数据提供方）。
 
-## How Uniswap Price Oracle Works
+## Uniswap 价格预言机如何工作
 
-Uniswap simply keeps the record of all previous swap prices. That's it. But instead of tracking actual prices, Uniswap
-tracks the *accumulated price*, which is the sum of prices at each second in the history of a pool contract.
+Uniswap 仅仅记录了所有之前的交易价格，就是这样。但是 Uniswap 并没有直接使用实际价格，而是跟踪 *累积价格*，也即这个池子合约历史中每秒的价格之和。
 
 $$a_{i} = \sum_{i=1}^t p_{i}$$
 
-This approach allows to find *time-weighted average price* between two points in time ($t_1$ and $t_2$) by simply
-getting the accumulated prices at these points ($a_{t_1}$ and $a_{t_2}$), subtracting one from the other, and dividing
-by the number of seconds between the two points:
+这个方法让我们能够找到两个时间点($t_1$ 和 $t_2$)之间的*时间加权平均价格(TWAP)*，只需要将这两个时间点的累积价格($a_{t_1}$ 和 $a_{t_2}$)相减，除以他们之间相隔的秒数即可：
 
 $$p_{t_1,t_2} = \frac{a_{t_2} - a_{t_1}}{t_2 - t_1}$$
 
-This is how it worked in Uniswap V2. In V3, it's slightly different. The price that's accumulated is the current tick
-(which is $log_{1.0001}$ of the price):
+Uniswap V2 中是这样工作的。在 V3 中，略有一些不同。累积的价格通过 tick 来计算的（也即价格的$log_{1.0001}$）：
 
 $$a_{i} = \sum_{i=1}^t log_{1.0001}P(i)$$
 
-And instead of averaging prices, *geometric mean* is taken:
+而且不再是直接平均价格，而是采用*几何平均数*：
 
 $$ P_{t_1,t_2} = \left( \prod_{i=t_1}^{t_2} P_i \right) ^ \frac{1}{t_2-t_1} $$
 
-To find the time-weighted geometric mean price between two points in time, we take the accumulated values at these time
-points, subtract one from the other, divide by the number of seconds between the two points, and calculate $1.0001^{x}$:
+为了求出两个之间点之间的时间加权几何平均价格，我们用这两个时间点的累积价格详见，除以两点之间的秒数差，然后计算$1.0001^{x}$：
 
 $$ log_{1.0001}{(P_{t_1,t_2})} = \frac{\sum_{i=t_1}^{t_2} log_{1.0001}(P_i)}{t_2-t_1}$$
 $$ = \frac{a_{t_2} - a_{t_1}}{t_2-t_1}$$
 
 $$P_{t_1,t_2} = 1.0001^{\frac{a_{t_2} - a_{t_1}}{t_2-t_1}}$$
 
-Uniswap V2 didn't store historical accumulated prices, which required referring to a third-party blockchain data indexing
-service to find a historical price when calculating an average one. Uniswap V3, on the other hand, allows to store up
-to 65,535 historical accumulated prices, which makes it much easier to calculate any historical time-weighter geometric
-price.
+Uniswap V2 并不存储历史累积价格，这就需要第三方的链上数据服务来自行存储并计算平均价格。而 Uniswap V3，允许存储最多 65535 个历史累积价格，使得获取历史时间加权几何平均价格更容易。
 
-## Price Manipulation Mitigation
+## 减轻价格操控
 
-Another important topic is price manipulation and how it's mitigated in Uniswap.
+另一个重要的点是价格操控，以及如何在 Uniswap 中减小它的影响。
 
-It's theoretically possible to manipulate a pool's price to your advantage: for example, buy a big amount of tokens to
-raise its price and get a profit on a third-party DeFi service that uses Uniswap price oracles, then trade the tokens
-back to the real price. To mitigate such attacks, Uniswap tracks prices **at the end of a block**, *after* the last trade
-of a block. This removes the possibility of in-block price manipulations.
+理论上，我们可以操纵池子的价格来获得利益：例如，买走大量的 token 来提高价格，然后从使用 Uniswap 价格预言机的第三方服务中获取利润，最后卖出 token 回到原价。为了减少这样的攻击，Uniswap 跟踪**区块结束时**的价格，在一个区块的最后一笔交易*之后*。这消除了在同一个区块内部的价格操纵的可能性。
 
-Technically, prices in the Uniswap oracle are updated at the beginning of each block, and each price is calculated before
-the first swap in a block.
+实际上，Uniswap 预言机中的价格在每个区块的头部更新，并且每个价格在区块的第一笔交易之后计算。
 
-## Price Oracle Implementation
+## 价格预言机的实现
 
-Alright, let's get to code.
+现在让我们开始代码部分。
 
-### Observations and Cardinality
+### 观测和基数
 
-We'll begin by creating the `Oracle` library contract and the `Observation` structure:
+我们首先创建 `Oracle` 库，以及 `Observation` 结构体：
 
 ```solidity
 // src/lib/Oracle.sol
@@ -105,9 +80,7 @@ library Oracle {
 }
 ```
 
-*An observation* is a slot that stores a recorded price. It stores a price, the timestamp when this price was recorded,
-and the `initialized` flag that is set to `true` when the observation is activated (not all observations are activated by
-default). A pool contract can store up to 65,535 observations:
+*一个观测(observation)* 是存储一个记录价格的 slot。它存储一个价格，记录这个价格时的时间戳，以及一个 `initialized` 标志位，当这个观测被激活时设置为 true（并不是所有的观测都默认激活）。一个池子合约能够存储至多 65535 个观测：
 
 ```solidity
 // src/UniswapV3Pool.sol
@@ -118,10 +91,8 @@ contract UniswapV3Pool is IUniswapV3Pool {
 }
 ```
 
-However, since storing that many instances of `Observation` requires a lot of gas (someone would have to pay for writing
-each of them to contract's storage), a pool by default can store only 1 observation, which gets overwritten each time
-a new price is recorded. The number of activated observations, the *cardinality* of observations, can be increased at
-any time by anyone who's willing to pay for that. To manage cardinality, we need a few extra state variables:
+然而，由于存储这么多 `Observation` 的实例会需要大量的 gas（总有人要为大量合约存储的写操作付款），一个池子默认只存储一个观测，每次新价格记录时都会把它覆盖掉。激活的观测数量，也即观测的*基数(cardinality)*，可以由任何愿意付款的人在任何时间增加。为了管理基数，我们需要一些额外的状态变量：
+
 ```solidity
     ...
     struct Slot0 {
@@ -139,16 +110,14 @@ any time by anyone who's willing to pay for that. To manage cardinality, we need
     ...
 ```
 
-- `observationIndex` tracks the index of the most recent observation;
-- `observationCardinality` tracks the number of activated observations;
-- `observationCardinalityNext` track the next cardinality the array of observations can expand to.
+- `observationIndex` 记录最新的观测的编号；
+- `observationCardinality` 记录活跃的观测数量；
+- `observationCardinalityNext` 记录观测数组能够扩展到的下一个基数的大小。
 
-Observations are stored in a fixed-length array that expands when a new observation is saved and `observationCardinalityNext`
-is greater than `observationCardinality` (which signals that cardinality can be expanded). If the array cannot be expanded
-(next cardinality value equals to the current one), oldest observations get overwritten, i.e. observation is stored at
-index 0, next one is stored at index 1, and so on.
+观测存储在一个定长的数组里，当一个新的观测被存储并且 `observationCardinalityNext` 超过 `observationCardinality` 的时候就会扩展。如果一个数组不能被扩展（下一个基数与现在的基数相同），旧的观测就会被覆盖，例如一个观测存储在下标 0，下一个就存储在下标 1，以此类推。
 
-When pool is created, `observationCardinality` and `observationCardinalityNext` are set to 1:
+当池子创建的时候，`observationCardinality` 和 `observationCardinalityNext` 都设置为1：
+
 ```solidity
 // src/UniswapV3Pool.sol
 contract UniswapV3Pool is IUniswapV3Pool {
@@ -191,7 +160,9 @@ library Oracle {
 }
 ```
 
-### Writing Observations
+### 写入观测
+
+在 `swap` 函数中，当现价改变时，一个观测会被写入观测数组：
 
 In `swap` function, when current price is changed, an observation is written to the observations array:
 
@@ -229,14 +200,9 @@ contract UniswapV3Pool is IUniswapV3Pool {
 }
 ```
 
-Notice that the tick that's observed here is `slot0_.tick` (not `state.stick`), i.e. the price before the swap! It's
-updated with a new price in the next statement. This is the price manipulation mitigation we discussed earlier: Uniswap
-tracks prices **before** the first trade in the block and **after** the last trade in the previous block.
+注意到，这里观测的 tick 是 `slot0_.tick`（而不是 `state.tick`），也即这笔交易之前的价格！它在下一条语句中更新为新的价格。这正是我们之前讨论到的防价格操控机制：Uniswap 记录这个区块第一笔交易**之前**的价格，以及上一个区块最后一笔交易**之后**的价格。
 
-Also notice that each observation is identified by `_blockTimestamp()`, i.e. the current block timestamp. This means that
-if there's already an observation for the current block, a price is not recorded. If there are no observations for the
-current block (i.e. this is the first swap in the block), a price is recorded. This is part of the price manipulation
-mitigation mechanism.
+另外要注意到，每个观测都通过 `_blockTimestamp()` 来标识，也即现在区块的时间戳。这意味着如果现在区块已经存在一个观测了，那么价格将不会被记录。如果当前区块没有观测（也即这是本区快中的第一笔 Uniswap 交易），价格才会被记录。这也是防价格操控机制的一部分。
 
 ```solidity
 // src/lib/Oracle.sol
@@ -263,12 +229,9 @@ function write(
 }
 ```
 
-Here we see that an observation is skipped when there's already an observation made at the current block. If there's no
-such observation though, we're saving a new one and trying to expand the cardinality when possible. The modulo operator
-(`%`) ensures that observation index stays within the range $[0, cardinality)$ and resets to 0 when the upper bound is
-reached.
+这里我们看到，如当前区块已经存在一个观测，那么将会跳过写。如果现在没有存在这样的关泽，我们将会存储一个新的，并且在可能的时候尝试扩展基数。取模运算符(`%`)确保了观测的下标保持在 $[0, cardinality)$ 区间中，并且当达到上界时重置为0。
 
-Now, let's look at the `transform` function:
+接下来，我们来看一下 `transform` 函数：
 
 ```solidity
 function transform(
@@ -289,15 +252,13 @@ function transform(
 }
 ```
 
-What we're calculating here is the accumulated price: current tick gets multiplied by the number of the seconds since
-the last observation and gets added to the last accumulated price.
+在这里，我们计算的是累积价格：现在的 tick 乘以上次观测到现在的秒数，并加到上一个累积价格之上。
 
-### Increase of Cardinality
+### 增加基数
 
-Let's now see how cardinality is expanded.
+现在，让我们来看一下基数是如何扩展的。
 
-Anyone at any time can increase the cardinality of observations of a pool and pay for the gas required to do so. For this,
-we'll add a new public function to Pool contract:
+任何人在任何时间都可以扩展一个池子中观测的基数，并为此支付 gas。因此，我们需要在池子合约中增添一个新的 public 的函数：
 
 ```solidity
 // src/UniswapV3Pool.sol
@@ -320,7 +281,7 @@ function increaseObservationCardinalityNext(
 }
 ```
 
-And a new function to Oracle:
+以及 Oracle 合约中的一个新函数：
 
 ```solidity
 // src/lib/Oracle.sol
@@ -339,11 +300,9 @@ function grow(
 }
 ```
 
-In the `grow` function, we're allocating new observations by setting the `timestamp` field of each of them to some non-
-zero value. Notice that `self` is a storage variable, assigning values to its elements will update the array counter and
-write the values to contract's storage.
+在 `grow` 函数中，我们通过把 `timestamp` 值设置为一些非零值来分配这些新的观测。注意到，`self` 是一个 `storage` 的变量，为它的元素分配值会更新数组计数器，并且把这些值写道合约的存储中。
 
-### Reading Observations
+### 读取观测
 
 We've finally come to the trickiest part of this chapter: reading of observations. Before moving on, let's review how
 observations are stored to get a better picture.
