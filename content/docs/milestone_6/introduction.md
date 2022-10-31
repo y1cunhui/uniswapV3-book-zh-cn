@@ -21,7 +21,7 @@ Uniswap V3 的一个额外特性是能够把流动性位置转换成 NFT。这�
 
 它展示了 token 的标识，池子费率，位置 ID，上下界 tick，token 地址，以及流动性所在的一段曲线。
 
-> 你可以在[这个 Opensea collection](https://opensea.io/collection/uniswap-v3-positions) 看到所有的 Uniswap V3 NFT positions。
+> 你可以在[这个 Opensea 集合](https://opensea.io/collection/uniswap-v3-positions) 看到所有的 Uniswap V3 NFT positions。
 
 在这个 milestone 中，我们将会添加使得流动性位置 NFT 代币化的功能。让我们开始吧！
 
