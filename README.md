@@ -105,7 +105,7 @@ https://uniswapv3book.com/
    2. [x] swap-fees
    3. [x] flash-loan-fees
    4. [x] protocol-fees
-   5. [ ] price-oracle
+   5. [x] price-oracle
    6. [ ] user-interface
 8. [ ] milestone_6
 9. [ ] proofreading

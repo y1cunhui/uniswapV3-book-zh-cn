@@ -304,34 +304,23 @@ function grow(
 
 ### 读取观测
 
-We've finally come to the trickiest part of this chapter: reading of observations. Before moving on, let's review how
-observations are stored to get a better picture.
+最后我们来到了这章中最棘手的一个部分：读取观测。在开始之前，我们来复习一下观测是如何存储的，以便于我们更好地理解。
 
-Observations are stored in a fixed-length array that can be expanded:
+观测是存储在一个长度可扩展的定长数组中：
 
 ![Observations array](/images/milestone_5/observations.png)
 
-As we noted above, observations are expected to overflow: if a new observation doesn't fit into the array, writing
-continues starting at index 0, i.e. oldest observations get overwritten:
+正如我们上面所说，观测是可以溢出的：如果一个新的观测不能直接塞进数组，写操作会重新从下标0开始，也即最老的观测将会被覆盖：
 
 ![Observations wrapping](/images/milestone_5/observations_wrapping.png)
 
-There's no guarantee that an observation will be stored for every block because swaps don't happen in every block. Thus,
-there will be blocks we don't know prices at, and such periods of missing observations can be long. Of course, we don't
-want to have gaps in the prices reported by the oracle, and this is why we're using time-weighted average prices (TWAP)–so we
-could have averaged prices in the periods where there were no observations. TWAP allows us to *interpolate* prices, i.e.
-to draw a line between two observations–each point on the line will be a price at a specific timestamp between the two
-observations.
+并不是每个区块都保证存在观测，因为交易并不一定在每个区块中都有。因此，会存在一些区块我们不知道价格，并且这样缺失的观测可能会很多。当然，我们并不希望在我们预言机提供的价格之间有很大空缺，这也是我们为什么使用时间加权平均价格（TWAP）——这样我们可以在没有观测的地方使用平均价格。TWAP 让我们能够做价格*插值*，即在两个观测之间画一条线，每个在这条线上的点都是两个观测之间某个时间戳对应的价格。
 
 ![Interpolated prices](/images/milestone_5/interpolated_prices.png)
 
+因此，读取观测意味着通过时间戳寻找到观测，并且在确实的观测处插值，同时要考虑到观测数组是可以溢出的（即数组中最老的观测可以在最新的观测之后）。由于我们并不是用时间戳作为下标来索引观测（为了节省 gas），我们需要使用[二分查找算法](https://en.wikipedia.org/wiki/Binary_search_algorithm)来更有效地查找。但并不总是如此。
 
-So, reading observations means finding observations by timestamps and interpolating missing observations, taking into
-consideration that the observations array is allowed to overflow (e.g. the oldest observation can come after the most
-recent one in the array). Since we're not indexing the observations by timestamps (to save gas), we'll need to use the
-[binary search algorithm](https://en.wikipedia.org/wiki/Binary_search_algorithm) to efficient search. But not always.
-
-Let's break it down into smaller steps and begin by implementing `observe` function in `Oracle`:
+让我们来把它拆解成更小的步骤，首先来实现 `Oracle` 库中的 `observe` 函数：
 
 ```solidity
 function observe(
@@ -357,10 +346,9 @@ function observe(
 }
 ```
 
-The function takes current block timestamp, the list of time points we want to get prices at (`secondsAgo`), current
-tick, observations index, and cardinality.
+这个函数接受当前区块时间戳，我们希望获取价格的时间点列表(`secondsAgo`)，现在的 tick，观测下标，以及基数，作为参数。
 
-Moving to the `observeSingle` function:
+接下来看一下 `observeSingle` 函数：
 
 ```solidity
 function observeSingle(
@@ -380,16 +368,13 @@ function observeSingle(
 }
 ```
 
-When most recent observation is requested (0 seconds passed), we can return it right away. If it wasn't record in the
-current block, transform it to consider the current block and the current tick.
+在请求观测时，我们需要在二分查找之前进行一些检查：
+1. 如果请求的时间点是最新的观测，我们可以返回最新观测中的数据；
+2. 如果请求的时间点是在最新的观测之后，我们可以调用 `transform` 来找到当前时间点上的累积价格（根据最新的观测）；
+3. 如果请求的时间点在最新观测之前，我们需要使用二分查找。
 
-If an older time point is requested, we need to make several checks before switching to the binary search algorithm:
-1. if the requested time point is the last observation, we can return the accumulated price at the latest observation;
-1. if the requested time point is after the last observation, we can call `transform`  to find the accumulated price at
-this point, knowing the last observed price and the current price;
-1. if the requested time point is before the last observation, we have to use the binary search.
+上面的代码片段执行了前两点，`secondsAgo == 0` 即代表请求当前区块的观测。接下来我们来看第三点：
 
-Let's go straight to the third point:
 ```solidity
 function binarySearch(
     Observation[65535] storage self,
@@ -405,21 +390,19 @@ function binarySearch(
     ...
 ```
 
-The function takes the current block timestamp (`time`), the timestamp of the price point requested (`target`), as well
-as the current observations index and cardinality. It returns the range between two observations in which the requested time
-point is located.
+这个函数参数为现在的区块时间戳（`time`），请求价格的时间点（`target`），以及现在观测的索引和基数。它返回两个观测的区间，请求的时间点就在这个区间之中。
 
-To initialize the binary search algorithm, we set the boundaries:
+在初始化二分查找过程中，我们设置边界：
+
 ```solidity
 uint256 l = (index + 1) % cardinality; // oldest observation
 uint256 r = l + cardinality - 1; // newest observation
 uint256 i;
 ```
 
-Recall that the observations array is expected to overflow, that's why we're using the modulo operator here.
+记得观测数组是可以溢出的，因此我们上面使用了模运算。
 
-Then we spin up an infinite loop, in which we check the middle point of the range: if it's not initialized (there's no
-observation), we're continuing with the next point:
+然后我们进入一个循环，每次检查区间的中点：如果它没有初始化（那里没有观测），我们将会进入下一个循环：
 
 ```solidity
 while (true) {
@@ -435,8 +418,7 @@ while (true) {
     ...
 ```
 
-If the point is initialized, we call it the left boundary of the range we want the requested time point to be included
-in. And we're trying to find the right boundary (`atOrAfter`):
+如果这个点已初始化，我们把它当做我们请求时间点所在区间的左边界。接下来我们尝试去验证右边界（`atOrAfter`）:
 
 ```solidity
     ...
@@ -448,7 +430,8 @@ in. And we're trying to find the right boundary (`atOrAfter`):
         break;
     ...
 ```
-If we've found the boundaries, we return them. If not, we continue our search:
+
+如果我们已经找到了边界，我们就直接返回。否则我们继续搜索：
 
 ```solidity
     ...
@@ -457,8 +440,8 @@ If we've found the boundaries, we return them. If not, we continue our search:
 }
 ```
 
-After finding a range of observations the requested time point belongs to, we need to calculate the price at the
-requested time point:
+在找到请求时间点所在的观测区间后，我们需要计算请求时间点的价格：
+
 ```solidity
 // function observeSingle() {
     ...
@@ -473,11 +456,9 @@ requested time point:
     ...
 ```
 
-This is as simple as finding the average rate of change within the range and multiplying it by the number of seconds
-that has passed between the lower bound of the range and the time point we need. This is the interpolation we discussed
-earlier.
+这部分很简单，就是求出在这个区间中价格变化的平均速率，乘以从下界到我们需要时间点之间的秒数。这就是我们之前讨论过的插值。
 
-The last thing we need to implement here is a public function in Pool contract that reads and returns observations:
+我们最后需要实现的就是池子合约中的一个 public 函数，读取并返回观测：
 
 ```solidity
 // src/UniswapV3Pool.sol
@@ -497,14 +478,13 @@ function observe(uint32[] calldata secondsAgos)
 }
 ```
 
-### Interpreting Observations
+### 解析观测
 
-Let's now see how to interpret observations.
+现在我们来看一下如何解析观测。
 
-The `observe` function we just added returns an array of accumulated prices, and we want to know how to convert them
-to actual prices. I'll demonstrate this in a test of the `observe` function.
+我们刚才实现的 `observe` 函数返回一个累积价格的数组，现在我们希望把它们转换成真正的价格。我会在 `observe` 函数的测试中解释如何实现这一点。
 
-In the test, I run multiple swaps in different directions and at different blocks:
+在测试中，我在不同区块、不同方向上执行了多笔不同的交易：
 
 ```solidity
 function testObserve() public {
@@ -522,11 +502,9 @@ function testObserve() public {
     ...
 ```
 
-> `vm.warp` is a cheat-code provided by Foundry: it forwards to a block with the specified timestamp. 2, 7, 20 – these
-are block timestamps.
+> `vm.warp` 是 Foundry 的一个 cheat code：它使用指定的时间戳产生一个新的区块——2,7,20这些是区块时间戳。
 
-The first swap is made at the block with timestamp 2, the second one is made at timestamp 7, and the third one is made at
-timestamp 20. We can then read the observations:
+第一笔交易发生在时间戳为2的区块，第二个在时间戳7，第三个在时间戳20。然后我们可以读取这些观测：
 
 ```solidity
     ...
@@ -535,7 +513,7 @@ timestamp 20. We can then read the observations:
     secondsAgos[1] = 13;
     secondsAgos[2] = 17;
     secondsAgos[3] = 18;
-
+    // 注意这里是secondsAgo，所以用20减去，能对应上面的每个时间戳
     int56[] memory tickCumulatives = pool.observe(secondsAgos);
     assertEq(tickCumulatives[0], 1607059);
     assertEq(tickCumulatives[1], 511146);
@@ -544,18 +522,14 @@ timestamp 20. We can then read the observations:
     ...
 ```
 
-1. The earliest observed price is 0, which is the initial observation that's set when the pool is deployed. However,
-since the cardinality was set to 3 and we made 3 swaps, it was overwritten by the last observation.
-1. During the first swap, tick 85176 was observed, which is the initial price of the pool–recall that the price before
-a swap is observed. Because the very first observation was overwritten, this is the oldest observation now.
-1. Next returned accumulated price is 170370, which is `85176 + 85194`. The former is the previous accumulator value,
-the latter is the price after the first swap that was observed during the second swap.
-1. Next returned accumulated price is 511146, which is `(511146 - 170370) / (17 - 13) = 85194`, the accumulated price
-between the second and the third swap.
-1. Finally, the most recent observation is 1607059, which is `(1607059 - 511146) / (20 - 7) = 84301`, which is ~4581
-USDC/ETH, the price after the second swap that was observed during the third swap.
+1. 最早观测的价格是0，即在池子部署时初始的观测。然而，由于我们设置的基数是3，我们进行了3笔交易，它被最后一个观测覆盖了。
+2. 在第一笔交易中，观测到的 tick 是85176，也即池子的初始价格——回忆一下，我们观测到的是区块中第一笔交易之前的价格。由于最早的一笔观测被覆盖掉了，这实际上是数组中最早的一个观测。
+3. 下一个返回的累计价格是 170370，也即 `85176 + 85194`。前者是之前的累积价格，后者是第一笔交易之后的价格，在下一个区块中被观测到。
+4. 下一个累积价格是 511146，即 `(511146 - 170370) / (17 - 13) = 85194`，在第二笔交易和第三笔交易之间的累积价格。
+5. 最后，最新的观测是 1607059，也即 `(1607059 - 511146) / (20 - 7) = 84301`，约为 4581 USDC/ETH，这事第二笔交易的价格，在第三笔交易中被观测到。
 
-And here's an example that involves interpolation: the time points requested are not the time points of the swaps:
+下面是一个包含了插值的测试样例：观测的时间点不是交易发生的时间点：
+
 
 ```solidity
 secondsAgos = new uint32[](5);
@@ -573,9 +547,9 @@ assertEq(tickCumulatives[3], 340758);
 assertEq(tickCumulatives[4], 85176);
 ```
 
-This results in prices: 4581.03, 4581.03, 4747.6, 5008.91, which are the average prices within the requested intervals.
+结果对应的价格分别是：4581.03, 4581.03, 4747.6, 5008.91，即对应间隔的平均价格。
 
-> Here's how to compute those values in Python:
+> 如何在 Python 中计算这些价格：
 > ```python
 > vals = [1607059, 1185554, 764049, 340758, 85176]
 > secs = [0, 5, 10, 15, 18]
