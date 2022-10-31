@@ -106,6 +106,6 @@ https://uniswapv3book.com/
    3. [x] flash-loan-fees
    4. [x] protocol-fees
    5. [x] price-oracle
-   6. [ ] user-interface
+   6. [x] user-interface
 8. [ ] milestone_6
 9. [ ] proofreading
