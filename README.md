@@ -100,7 +100,7 @@ https://uniswapv3book.com/
    4. [x] multi-pool-swap
    5. [x] user-interface
    6. [x] tick-rounding
-7. [ ] milestone_5
+7. [x] milestone_5
    1. [x] introduction
    2. [x] swap-fees
    3. [x] flash-loan-fees
