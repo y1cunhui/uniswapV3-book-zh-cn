@@ -27,7 +27,7 @@ https://github.com/Jeiwan/uniswapv3-code
 
 你可以在这里阅读本书:
 
-https://uniswapv3book.com/
+https://y1cunhui.github.io/uniswapV3-book-zh-cn/
 
 
 
@@ -45,19 +45,6 @@ https://uniswapv3book.com/
   $ hugo server -D
   ```
 4. 访问 http://localhost:1313/ (或者在你命令行输出中展示的URL)
-
-## 译者注
-如果对文章翻译有意见和改进，欢迎提issue和PR
-（翻译结束前暂不接受PR）
-
-本书原作者的其他两个系列博客也是我非常推荐的，链接附在下面欢迎感兴趣者学习
-
-1. https://jeiwan.net/posts/building-blockchain-in-go-part-1/
-如何从零开始搭建一个区块链，使用golang语言
-
-2. https://jeiwan.net/posts/programming-defi-uniswap-1/
-如果从零开始搭建uniswap，包含从V1到V2（V3即本书），也是我的DeFi入门教程
-推荐阅读本书前可以先阅读该系列。
 
 ## TODO
 
