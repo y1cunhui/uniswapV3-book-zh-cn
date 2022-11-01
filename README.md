@@ -111,5 +111,5 @@ https://uniswapv3book.com/
    1. [x] introduction
    2. [x] erc721-overview
    3. [x] nft-manager
-   4. [ ] ntf-renderer
+   4. [x] ntf-renderer
 9.  [ ] proofreading
