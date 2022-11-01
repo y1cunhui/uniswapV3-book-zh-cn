@@ -107,7 +107,7 @@ https://uniswapv3book.com/
    4. [x] protocol-fees
    5. [x] price-oracle
    6. [x] user-interface
-8. [ ] milestone_6
+8. [x] milestone_6
    1. [x] introduction
    2. [x] erc721-overview
    3. [x] nft-manager
