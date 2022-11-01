@@ -110,6 +110,6 @@ https://uniswapv3book.com/
 8. [ ] milestone_6
    1. [x] introduction
    2. [x] erc721-overview
-   3. [ ] nft-manager
+   3. [x] nft-manager
    4. [ ] ntf-renderer
 9.  [ ] proofreading
