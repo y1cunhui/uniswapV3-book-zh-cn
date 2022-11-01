@@ -10,7 +10,8 @@ weight: 0
 ---
 
 # Uniswap V3 Book 中文版
-TODO：校对中
+
+中文/[English](https://uniswapv3book.com/)
 
 <p align="center">
 <img src="/images/book.jpg" alt="Uniswap V3 Development Book cover" width="480"/>

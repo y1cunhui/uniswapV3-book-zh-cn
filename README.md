@@ -1,4 +1,4 @@
-# Uniswap V3 Development Book中文版 (🚧 NOT FINISHED YET 🚧)
+# Uniswap V3 Book中文版
 [English Version](https://github.com/Jeiwan/uniswapv3-book)
 
 本书将引导读者如何开发一个完整的高级的去中心化应用。在本书中，我们将搭建一个去中心化交易所，[Uniswap V3](https://uniswap.org/)的克隆
@@ -113,3 +113,10 @@ https://uniswapv3book.com/
    3. [x] nft-manager
    4. [x] ntf-renderer
 9.  [ ] proofreading
+   1.  [ ] introduction
+   2.  [ ] milestone_1
+   3.  [ ] milestone_2
+   4.  [ ] milestone_3
+   5.  [ ] milestone_4
+   6.  [ ] milestone_5
+   7.  [ ] milestone_6
