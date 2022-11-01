@@ -61,7 +61,7 @@ https://uniswapv3book.com/
 
 ## TODO
 
-1. [ ] Introduction
+1. [x] Introduction
 2. [x] milestone_0
    1. [x] introduction-to-markets
    2. [x] constant-function-market-maker
