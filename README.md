@@ -100,7 +100,7 @@ https://y1cunhui.github.io/uniswapV3-book-zh-cn/
    3. [x] nft-manager
    4. [x] ntf-renderer
 9.  [ ] proofreading
-   1.  [ ] introduction
+   1.  [x] introduction
    2.  [ ] milestone_1
    3.  [ ] milestone_2
    4.  [ ] milestone_3
