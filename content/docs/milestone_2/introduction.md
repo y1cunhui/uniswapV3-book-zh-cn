@@ -20,7 +20,11 @@ OK，现在才是真正的开始。到目前为止，我们的实现看起来过
 
 让我们开始吧
 
-> 本章节的所有代码可以在[这个Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_2)找到
->
-> 本章会对我们之前实现的合约进行大量的更新。 [在这里你可以看到与上一个milestone的所有代码差别](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_1...milestone_2)
+> 你可以在[这个 Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_2) 找到本章完整代码.
+
+> 本章对已有的合约做出了大量改动。 [在这里可以看到相比于上一章所有的代码变动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_1...milestone_2)
+
+> 如果你有任何问题，欢迎在[本章的 Github Discussion 中提问和交流](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-2-second-swap)!
+
+
 

@@ -25,9 +25,9 @@ weight: 1
 
 让我们开始吧。
 
-> 本章的完整代码可以参考[这个Github分支](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_3)
+> 本章的完整代码可以参考[这个 Github 分支](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_3)
 
-> 这个milestone也对于已有的合约做了许多修改，[你可以在这里看到在上一个milestone基础上进行的改动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_2...milestone_3)
+> 本章也对于已有的合约做了许多修改，[你可以在这里看到在上一章基础上进行的改动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_2...milestone_3)
 
-> 如果你关于本章有任何问题，欢迎[在本章的Github Discussion](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-3-cross-tick-swaps)提问和交流！
+> 如果你关于本章有任何问题，欢迎[在本章的 Github Discussion](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-3-cross-tick-swaps)提问和交流！
 

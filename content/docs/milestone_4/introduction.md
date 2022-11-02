@@ -26,7 +26,7 @@ weight: 1
 
 > 你可以在[这个 Github branch](https://github.com/Jeiwan/uniswapv3-code/tree/milestone_4) 找到本章完整代码.
 
-> 本 milestone 对已有的合约做出了大量改动。 [在这里可以看到相比于上一个 milestone 所有的代码变动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_3...milestone_4)
+> 本章对已有的合约做出了大量改动。 [在这里可以看到相比于上一章所有的代码变动](https://github.com/Jeiwan/uniswapv3-code/compare/milestone_3...milestone_4)
 
-> 如果你有任何问题，欢迎在[本 milestone 的 Github Discussion 中提问和交流](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-4-multi-pool-swaps)!
+> 如果你有任何问题，欢迎在[本章的 Github Discussion 中提问和交流](https://github.com/Jeiwan/uniswapv3-book/discussions/categories/milestone-4-multi-pool-swaps)!
 
