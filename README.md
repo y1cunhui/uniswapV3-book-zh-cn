@@ -101,7 +101,7 @@ https://y1cunhui.github.io/uniswapV3-book-zh-cn/
    4. [x] ntf-renderer
 9.  [ ] proofreading
    1.  [x] introduction
-   2.  [ ] milestone_1
+   2.  [x] milestone_1
    3.  [ ] milestone_2
    4.  [ ] milestone_3
    5.  [ ] milestone_4
