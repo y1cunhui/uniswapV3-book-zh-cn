@@ -13,17 +13,17 @@ weight: 2
 
 # 输出金额计算
 
-我们的Uniswap数学公式中还缺最后一个组成部分：计算卖出 ETH (即 token $x$ )时获得的资产数量。在前一章中，我们有一个类似的公式计算购买ETH(购买 token $x$)的场景：
+我们的 Uniswap 数学公式中还缺最后一个组成部分：计算卖出 ETH (即 token $x$ )时获得的资产数量。在前一章中，我们有一个类似的公式计算购买 ETH(购买 token $x$)的场景：
 
 $$\Delta \sqrt{P} = \frac{\Delta y}{L}$$
 
-这个公式计算卖出token $y$时的价格变化。我们把这个差价加到现价上面，来得到目标价格：
+这个公式计算卖出 token $y$ 时的价格变化。我们把这个差价加到现价上面，来得到目标价格：
 
 $$\sqrt{P_{target}} = \sqrt{P_{current}} + \Delta \sqrt{P}$$
 
 现在，我们需要一个类似的公式来计算卖出 token $x$（在本案例中为 ETH）买入 token $y$（在本案例中为 USDC）时的目标价格（在本案例中为卖出 ETH）。
 
-回忆一下，token $x$ 的变化可以如下计算：
+回忆一下，token $x$ 的变化可以用如下方式计算：
 
 $$\Delta x = \Delta \frac{1}{\sqrt{P}}L$$
 
@@ -37,7 +37,7 @@ $$\\ \sqrt{P_{target}} = \frac{\sqrt{P}L}{\Delta x \sqrt{P} + L}$$
 
 知道了目标价格，我们就能够用前一章类似的方式计算出输出的金额
 
-更新一下对应的Python脚本
+更新一下对应的 Python 脚本
 ```python
 # Swap ETH for USDC
 amount_in = 0.01337 * eth
@@ -67,6 +67,6 @@ ETH in: 0.013369999999998142
 USDC out: 66.80838889019013
 ```
 
-上述结果显示，在之前提供流动性的基础上，卖出0.01337 ETH 可以获得 66.8 USDC。
+上述结果显示，在之前提供流动性的基础上，卖出 0.01337 ETH 可以获得 66.8 USDC。
 
-这看起来还不错，但是我们已经受够了使用Python！下面我们将会在Solidity中实现所有的数学计算。
+这看起来还不错，但是我们已经受够了使用 Python！下面我们将会在 Solidity 中实现所有的数学计算。
