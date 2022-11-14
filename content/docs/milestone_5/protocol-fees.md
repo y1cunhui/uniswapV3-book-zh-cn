@@ -13,7 +13,7 @@ weight: 4
 
 # 协议费率
 
-在实现 Uniswap 的过程中，你可能会有疑问：”Uniswap 怎么挣钱？“。事实上，它并不挣钱（至少到 2022 年 9 月为止还没有）。
+在实现 Uniswap 的过程中，你可能会有疑问：“Uniswap 如何盈利？”。事实上，它并不盈利（至少到 2022 年 9 月为止还没有）。
 
 在我们已经完成的实现中，交易员会给 LP 支付一定费用，然而 Uniswap Labs，作为这个 DEX 的项目方，并不在这个过程中。交易员和 LP 在使用 Uniswap DEX 的过程中都不会给 Uniswap Labs 支付任何费用。为什么会这样？
 
@@ -58,7 +58,7 @@ function setFeeProtocol(uint8 feeProtocol0, uint8 feeProtocol1) external overrid
 }
 ```
 
-正如你所见，是可以对于每种 token 收取不同的费率的。这些值包含两个 `uint8`，被打包和存储进一个 `uint8` 里面：`feeProtocol1` 左移4位，并加上 `feeProtocol0`。想要获得 `feeProtocol0`，可以用 `slot0.feeProtocol` 除以 16 取余数。`feeProtocol1` 只需要 `slot0.feeProtocol` 右移4位。能进行这样的打包是因为 `feeProtocol0` 和 `feeProtocol1` 都不会超过10。
+正如你所见，是可以对于每种 token 收取不同的费率的。这些值包含两个 `uint8`，被打包和存储进一个 `uint8` 里面：`feeProtocol1` 左移4位，并加上 `feeProtocol0`。想要获得 `feeProtocol0`，可以用 `slot0.feeProtocol` 除以 16 取余数。`feeProtocol1` 只需要 `slot0.feeProtocol` 右移4位。能进行这样的打包是因为 `feeProtocol0` 和 `feeProtocol1` 都不会超过 10。
 
 在交易之前，我们需要根据交易方向来选择一个协议费率：
 

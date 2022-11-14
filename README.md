@@ -104,6 +104,6 @@ https://y1cunhui.github.io/uniswapV3-book-zh-cn/
    2.  [x] milestone_1
    3.  [x] milestone_2
    4.  [x] milestone_3
-   5.  [ ] milestone_4
-   6.  [ ] milestone_5
+   5.  [x] milestone_4
+   6.  [x] milestone_5
    7.  [ ] milestone_6
