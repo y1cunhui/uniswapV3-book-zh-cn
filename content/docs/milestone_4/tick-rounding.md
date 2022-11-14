@@ -15,7 +15,7 @@ weight: 6
 
 我们来看一下，为了支持不同的 tick 间隔，我们还需进行哪些改动。
 
-大于1的 tick 间隔将不允许用户选择任意的价格区间：区间的 tick index 必须是 tick 间隔的整数倍。例如，当 tick 间隔为 60 时，我们选择的 tick 可以是：0，60，120，180等等。因此，当用户选择某个区间是，我们需要将其舍入到最近的，满足 tick 间隔整数倍的区间中。
+大于 1 的 tick 间隔将不允许用户选择任意的价格区间：区间的 tick index 必须是 tick 间隔的整数倍。例如，当 tick 间隔为 60 时，我们选择的 tick 可以是：0，60，120，180等等。因此，当用户选择某个区间是，我们需要将其舍入到最近的，满足 tick 间隔整数倍的区间中。
 
 ## JavaScript 中的 `nearestUsableTick`
 在 [the Uniswap V3 SDK](https://github.com/Uniswap/v3-sdk)中， 实现这个功能的函数叫做 [nearestUsableTick](https://github.com/Uniswap/v3-sdk/blob/b6cd73a71f8f8ec6c40c130564d3aff12c38e693/src/utils/nearestUsableTick.ts):

@@ -11,13 +11,13 @@ weight: 5
 
 # 用户界面
 
-在引入交易路径后，我们可以大大简化我们 web 应用的内部逻辑。首先，每一个交易都使用路径，因为路径并不一定要有多个池子；其次，现在更容易改变交易方向了：我们只需要把路径翻转；最后，由于通过 `CREATE2` 和盐值能够确定唯一的合约地址，我们不再需要存储合约地址以及考虑 token 顺序了。
+在引入交易路径后，我们可以大大简化我们 web 应用的内部逻辑。首先，每一个交易都使用路径，因为路径并不一定要有多个池子；其次，现在更容易改变交易方向了：我们只需要把路径翻转即可；最后，由于通过 `CREATE2` 和盐值能够确定唯一的合约地址，我们不再需要存储合约地址以及考虑 token 顺序了。
 
 然而，在把多池子交易集成到 web 应用之前，我们还必须添加一个非常重要的算法。问自己这样一个问题：”如何找到两个没有池子的 token 之间的路径？“
 
 ## 自动路由
 
-Uniswap 实现了一个叫做*自动路由(AutoRouter)*的算法，能够在两种 token 之间寻找最短路径。它还能够把一笔支付拆成多笔支付，来寻找到最好的平均交易价格。[比起未拆分的交易，利润能够增加 36.84%](https://uniswap.org/blog/auto-router-v2)。这听起来很不错，然而，我们并不会实现一个这么高级的算法。我们只实现一个很简单的版本。
+Uniswap 实现了一个叫做*自动路由(AutoRouter)*的算法，能够在两种 token 之间寻找最短路径。它还能够把一笔支付拆成多笔支付，来寻找到最好的平均交易价格。[比起未拆分的交易，这种交易方式的利润能够增加 36.84%](https://uniswap.org/blog/auto-router-v2)。这听起来很不错，然而，我们并不会实现一个这么高级的算法。我们只实现一个很简单的版本。
 
 ## 一个简单的路由设计
 
@@ -31,9 +31,9 @@ Uniswap 实现了一个叫做*自动路由(AutoRouter)*的算法，能够在两�
 
 ![Pools graph](/images/milestone_4/pools_graph.png)
 
-图的最大优势在于我们能够遍历节点来寻找路径。在这里，我们将使用[A*算法](https://en.wikipedia.org/wiki/A*_search_algorithm)。如果有兴趣可以学习一下这个算法如何工作，但在我们的 app 里，我们使用一个实现了这个算法的库。我们使用[ngraph.ngraph](https://github.com/anvaka/ngraph.graph)来建图，使用[ngraph.path](https://github.com/anvaka/ngraph.path)来寻找最短路径（这个库实现了 A* 算法）。
+图的最大优势在于我们能够遍历节点来寻找路径。在这里，我们将使用 [A* 算法](https://en.wikipedia.org/wiki/A*_search_algorithm)。如果有兴趣可以学习一下这个算法如何工作，但在我们的 app 里，我们使用一个实现了这个算法的库。我们使用 [ngraph.ngraph](https://github.com/anvaka/ngraph.graph) 来建图，使用 [ngraph.path](https://github.com/anvaka/ngraph.path) 来寻找最短路径（这个库实现了 A* 算法）。
 
-在前端中，我们创建一个路径搜索器。这是一个类，在初始化时把一系列的对转换成一张图，后续使用这个图来寻找两个 token 之间的最短路径。
+在前端中，我们创建一个路径搜索器。这是一个类，在初始化时把一系列的点对转换成一张图，后续使用这个图来寻找两个 token 之间的最短路径。
 
 ```javascript
 import createGraph from 'ngraph.graph';
