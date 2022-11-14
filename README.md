@@ -99,11 +99,11 @@ https://y1cunhui.github.io/uniswapV3-book-zh-cn/
    2. [x] erc721-overview
    3. [x] nft-manager
    4. [x] ntf-renderer
-9.  [ ] proofreading
+9.  [x] proofreading
    1.  [x] introduction
    2.  [x] milestone_1
    3.  [x] milestone_2
    4.  [x] milestone_3
    5.  [x] milestone_4
    6.  [x] milestone_5
-   7.  [ ] milestone_6
+   7.  [x] milestone_6

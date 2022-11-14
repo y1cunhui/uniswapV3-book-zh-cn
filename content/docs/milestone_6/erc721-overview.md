@@ -27,7 +27,7 @@ ERC20 和 ERC721 最大的区别是后者由 `tokenURI` 函数。NFT 的 token�
     "strength": 20
 }
 ```
-（这个例子来自于[OpenZeppelin 的 ERC721 文档](https://docs.openzeppelin.com/contracts/4.x/erc721)）
+（这个例子来自于 [OpenZeppelin 的 ERC721 文档](https://docs.openzeppelin.com/contracts/4.x/erc721)）
 
 这样的一个 JSON 文件定义了：一个 token 的名字、一个 collection 的描述、到对应图片的链接，以及 token 的一些属性。
 

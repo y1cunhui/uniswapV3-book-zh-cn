@@ -1,5 +1,5 @@
 ---
-title: "NFT 管理员"
+title: "NFT 管理员合约"
 weight: 3
 # bookFlatSection: false
 # bookToc: true
@@ -27,9 +27,9 @@ weight: 3
 
 ## 最小合约
 
-我们并不希望从零开始实现 ERC721 标准，所以我们使用库。我们依赖中已经有了 [Solmate](https://github.com/transmissions11/solmate)，所以我们会使用[它的 ERC721 实现](https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)。
+我们并不希望从零开始实现 ERC721 标准，所以我们使用已有的库。我们依赖中已经有了 [Solmate](https://github.com/transmissions11/solmate)，所以我们会使用[它的 ERC721 实现](https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)。
 
-> 使用 [OpenZeppelin 的 ERC721 合约](https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721)也是可以的，不过这里选择使用一个更省 gas 的 Solmate 版本。
+> 使用 [OpenZeppelin 的 ERC721 合约](https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/token/ERC721)也是可以的，不过这里选择使用更省 gas 的 Solmate 版本。
 
 这是一个什么空的的最小的 NFT 管理员合约：
 
