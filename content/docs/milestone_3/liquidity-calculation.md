@@ -13,7 +13,7 @@ weight: 5
 
 # 流动性计算
 
-在Uniswap V3的所有数学中，我们还没在Solidity里面实现流动性计算。在Python脚本中我们有这两个函数：
+在 Uniswap V3 的所有数学公式中，只剩流动性计算我们还没在 Solidity 里面实现。在 Python 脚本中我们有这两个函数：
 
 ```python
 def liquidity0(amount, pa, pb):
@@ -28,7 +28,7 @@ def liquidity1(amount, pa, pb):
     return amount * q96 / (pb - pa)
 ```
 
-接下来我们在Solidity中实现这个计算，以便于在 `Manager.mint()` 中使用。
+接下来我们在 Solidity 中实现这个计算，以便于在 `Manager.mint()` 中使用。
 
 ## 实现 Token X 的流动性计算
 
@@ -45,7 +45,7 @@ $$L = \frac{\Delta x \sqrt{P_u} \sqrt{P_l}}{\sqrt{P_u} - \sqrt{P_l}}$$
 
 > 这个公式来自于[计算流动性](https://y1cunhui.github.io/uniswapV3-book-zh-cn/docs/milestone_1/calculating-liquidity/#liquidity-amount-calculation)一章。
 
-在Solidity中，我们仍然使用 `PRBMath` 来处理乘除过程中可能出现的溢出：
+在 Solidity 中，我们仍然使用 `PRBMath` 来处理乘除过程中可能出现的溢出：
 
 ```solidity
 function getLiquidityForAmount0(
@@ -97,7 +97,7 @@ function getLiquidityForAmount1(
 
 ## 找到公平的流动性
 
-你可能会问为什么我们有两种方式来计算 $L$，但是我们实际上只有一个 $L$，即$L = \sqrt{xy}$，究竟哪种方法是正确的？答案是：两种方法都是正确的。
+你可能会问为什么我们有两种方式来计算 $L$，但是我们实际上只有一个 $L$，即 $L = \sqrt{xy}$，究竟哪种方法是正确的？答案是：两种方法都是正确的。
 
 在上面的公式中，我们基于不同的参数来计算$L$：价格区间和其中某种 token 的数量。不同的价格区间和不同的 token 数量会导致不同的 $L$。有一个场景是我们需要计算两个$L$并且从中挑选出一个的，回顾一下之前的 `mint` 函数：
 
@@ -116,8 +116,8 @@ if (slot0_.tick < lowerTick) {
 ```
 
 在计算流动性时有如下逻辑：
-1. 如果我们在一个低于现价的价格区间计算流动性，我们使用 $\Delta y$ 版本的公式
-2. 如果我们在一个高于现价的价格区间计算流动性，我们使用 $\Delta x$ 版本的公式
+1. 如果我们在一个低于现价的价格区间计算流动性，我们使用 $\Delta y$ 版本的公式；
+2. 如果我们在一个高于现价的价格区间计算流动性，我们使用 $\Delta x$ 版本的公式；
 3. 如果现价在价格区间内，我们两个都计算并且挑选较小的一个。
 
 > 同样，这些也在[计算流动性](https://y1cunhui.github.io/uniswapV3-book-zh-cn/docs/milestone_1/calculating-liquidity/#liquidity-amount-calculation)一章中讨论过。

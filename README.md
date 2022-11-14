@@ -102,8 +102,8 @@ https://y1cunhui.github.io/uniswapV3-book-zh-cn/
 9.  [ ] proofreading
    1.  [x] introduction
    2.  [x] milestone_1
-   3.  [ ] milestone_2
-   4.  [ ] milestone_3
+   3.  [x] milestone_2
+   4.  [x] milestone_3
    5.  [ ] milestone_4
    6.  [ ] milestone_5
    7.  [ ] milestone_6
