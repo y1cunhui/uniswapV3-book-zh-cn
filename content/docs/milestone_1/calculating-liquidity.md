@@ -145,15 +145,15 @@ $$\Delta y = \Delta \sqrt{P} L$$
 
 我们把上述公式中的 $\Delta \sqrt{P}$ 相关部分展开：
 
-$$\Delta x = (\frac{1}{\sqrt{P_b}} - \frac{1}{\sqrt{P_c}}) L$$
+$$\Delta x = (\frac{1}{\sqrt{P_c}} - \frac{1}{\sqrt{P_b}}) L$$
 $$\Delta y = (\sqrt{P_c} - \sqrt{P_a}) L$$
 
 $P_a$ 是 $a$ 点的价格，$P_b$ 是 $b$ 点的价格, $P_c$ 是现货价格。
 
 我们接下来根据第一个公式推导出计算 $L$ 的公式：
 
-$$\Delta x = (\frac{1}{\sqrt{P_b}} - \frac{1}{\sqrt{P_c}}) L$$
-$$\Delta x = \frac{L}{\sqrt{P_b}} - \frac{L}{\sqrt{P_c}}$$
+$$\Delta x = (\frac{1}{\sqrt{P_c}} - \frac{1}{\sqrt{P_b}}) L$$
+$$\Delta x = \frac{L}{\sqrt{P_c}} - \frac{L}{\sqrt{P_b}}$$
 $$\Delta x = \frac{L(\sqrt{P_b} - \sqrt{P_c})}{\sqrt{P_b} \sqrt{P_c}}$$
 $$L = \Delta x \frac{\sqrt{P_b} \sqrt{P_c}}{\sqrt{P_b} - \sqrt{P_c}}$$
 
