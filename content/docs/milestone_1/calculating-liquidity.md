@@ -168,13 +168,13 @@ $$L = \frac{\Delta y}{\sqrt{P_c} - \sqrt{P_a}}$$
 
 接下来，我们把之前计算出的价格代入公式:
 
-$$L = \Delta x \frac{\sqrt{P_b}\sqrt{P_c}}{\sqrt{P_b}-\sqrt{P_c}} = 1 ETH * \frac{67.42 * 70.71}{70.71 - 67.42}$$
+$$L = \Delta x \frac{\sqrt{P_b}\sqrt{P_c}}{\sqrt{P_b}-\sqrt{P_c}} = 1 ETH * \frac{74.16 * 70.71}{74.16 - 70.71}$$
 转换成 Q64.96 后得到:
 
 $$L = 1519437308014769733632$$
 
 对于另一个 $L$:
-$$L = \frac{\Delta y}{\sqrt{P_c}-\sqrt{P_a}} = \frac{5000USDC}{74.16-70.71}$$
+$$L = \frac{\Delta y}{\sqrt{P_c}-\sqrt{P_a}} = \frac{5000USDC}{70.71 - 67.42}$$
 $$L = 1517882343751509868544$$
 
 两者中，我们选择小的那一个
