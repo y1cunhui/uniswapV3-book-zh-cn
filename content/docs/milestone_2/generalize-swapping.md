@@ -29,7 +29,7 @@ function swap(
     ...
 ```
 
-在 `swap` 函数中，我们新增了两个参数：`zeroForOne` 和 `amountSpecified`。`zeroForOne` 是用来控制交易方向的 flag：当设置为 true，是用 `token0` 兑换 `token1`；false 则相反。例如，如果 `token0` 是ETH，`token1` 是USDC，将 `zeroForOne` 设置为 true 意味着用 USDC 购买 ETH。`amountSpecified` 是用户希望卖出的 token 数量。
+在 `swap` 函数中，我们新增了两个参数：`zeroForOne` 和 `amountSpecified`。`zeroForOne` 是用来控制交易方向的 flag：当设置为 true，是用 `token0` 兑换 `token1`；false 则相反。例如，如果 `token0` 是ETH，`token1` 是USDC，将 `zeroForOne` 设置为 true 意味着用 ETH 购买 USDC。`amountSpecified` 是用户希望卖出的 token 数量。
 
 ## 填满订单
 
