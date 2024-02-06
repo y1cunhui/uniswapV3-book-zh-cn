@@ -164,7 +164,6 @@ library Oracle {
 
 在 `swap` 函数中，当现价改变时，一个观测会被写入观测数组：
 
-In `swap` function, when current price is changed, an observation is written to the observations array:
 
 ```solidity
 // src/UniswapV3Pool.sol
@@ -229,7 +228,7 @@ function write(
 }
 ```
 
-这里我们看到，如当前区块已经存在一个观测，那么将会跳过写。如果现在没有存在这样的关泽，我们将会存储一个新的，并且在可能的时候尝试扩展基数。取模运算符(`%`)确保了观测的下标保持在 $[0, cardinality)$ 区间中，并且当达到上界时重置为 0。
+这里我们看到，如当前区块已经存在一个观测，那么将会跳过写。如果现在没有存在这样的观测，我们将会存储一个新的，并且在可能的时候尝试扩展基数。取模运算符(`%`)确保了观测的下标保持在 $[0, cardinality)$ 区间中，并且当达到上界时重置为 0。
 
 接下来，我们来看一下 `transform` 函数：
 
