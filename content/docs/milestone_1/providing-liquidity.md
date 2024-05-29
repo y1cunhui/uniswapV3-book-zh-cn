@@ -420,6 +420,8 @@ function setupTestCase(TestCaseParams memory params)
         params.currentTick
     );
 
+    shouldTransferInCallback = params.shouldTransferInCallback;
+
     if (params.mintLiqudity) {
         (poolBalance0, poolBalance1) = pool.mint(
             address(this),
@@ -428,8 +430,6 @@ function setupTestCase(TestCaseParams memory params)
             params.liquidity
         );
     }
-
-    shouldTransferInCallback = params.shouldTransferInCallback;
 }
 ```
 在这个函数中，我们铸造了 token，部署了池子合约。由于 `mintLiquidity` 参数设置为 true，我们会在池子中铸造初始流动性。最后，我们设置 `shouldTransferInCallback` 变量，使得在 callback 中能读到此参数：
