@@ -247,6 +247,8 @@ function get(
 ```solidity
 amount0 = 0.998976618347425280 ether;
 amount1 = 5000 ether;
+
+liquidity += amount;
 ```
 
 > 在后面的章节中，我们会把这里替换成真正的计算。
